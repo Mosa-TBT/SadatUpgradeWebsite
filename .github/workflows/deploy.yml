@@ -77,16 +77,24 @@ jobs:
           echo "$HOST_KEY" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
-      - name: Install deploy key (validate format, fail fast)
+      - name: Install deploy key (normalize + validate, fail fast)
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/sadat_deploy"
+          set -euo pipefail
+          key=$(printf '%s' "$DEPLOY_SSH_KEY")
+          # Tolerate common secret-storage artifacts: literal "\n" escapes, CR, edge whitespace.
+          key=$(printf '%s' "$key" | sed -e 's/\\n/\n/g' -e 's/\r$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          # Strip one layer of matching surrounding quotes, if the secret was pasted quoted.
+          if [[ "$key" == \"*\" ]] || [[ "$key" == \'*\' ]]; then
+            key="${key:1:${#key}-2}"
+          fi
+          printf '%s\n' "$key" > "$HOME/.ssh/sadat_deploy"
           chmod 600 "$HOME/.ssh/sadat_deploy"
-          ssh-keygen -y -f "$HOME/.ssh/sadat_deploy" >/dev/null 2>&1 || {
-            echo "::error title=Deploy key::DEPLOY_SSH_KEY is not a valid private key. Re-add it with the exact BEGIN/END block using real newlines (no quotes, no literal \\n).";
-            exit 1;
-          }
+          if ! ssh-keygen -y -f "$HOME/.ssh/sadat_deploy" >/dev/null 2>&1; then
+            echo "::error title=Deploy key::DEPLOY_SSH_KEY is still not a valid private key after normalization. The secret must contain the complete PEM/OpenSSH block (BEGIN/END lines) with real newlines and nothing else."
+            exit 1
+          fi
           echo "deploy key OK"
 
       - name: Upload release source
