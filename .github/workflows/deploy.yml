@@ -46,13 +46,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Persist build for deploy
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-check
-          path: .next
-          if-no-files-found: error
-
   deploy:
     name: Deploy to production
     needs: ci
