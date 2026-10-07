@@ -60,9 +60,10 @@ jobs:
 
       - name: Prepare source tarball (no node_modules / .next / .git)
         run: |
-          tar \
+          tar --warning=no-file-changed \
             --exclude=node_modules --exclude=.next --exclude=.git \
             --exclude=backend/vendor --exclude=backend/storage \
+            --exclude="sadat-src-${{ env.TS }}.tar.gz" \
             -czf "sadat-src-${{ env.TS }}.tar.gz" .
 
       - name: Trust host key (pinned; StrictHostKeyChecking stays enabled)
