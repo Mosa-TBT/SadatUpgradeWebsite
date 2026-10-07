@@ -60,11 +60,13 @@ jobs:
 
       - name: Prepare source tarball (no node_modules / .next / .git)
         run: |
-          tar --warning=no-file-changed \
+          mkdir -p .deploy-artifacts
+          tar --warning=no-file-changed --ignore-failed-read \
             --exclude=node_modules --exclude=.next --exclude=.git \
             --exclude=backend/vendor --exclude=backend/storage \
-            --exclude="sadat-src-${{ env.TS }}.tar.gz" \
-            -czf "sadat-src-${{ env.TS }}.tar.gz" .
+            --exclude=.deploy-artifacts \
+            -czf ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz" .
+          ls -lh .deploy-artifacts/
 
       - name: Trust host key (pinned; StrictHostKeyChecking stays enabled)
         run: |
@@ -80,7 +82,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           fingerprint: ${{ env.HOST_FINGERPRINT }}
           port: 22
-          source: "sadat-src-${{ env.TS }}.tar.gz"
+          source: ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz"
           target: "${{ env.DEPLOY_PATH }}/releases/"
 
       # Fail fast on a syntax/logic error in the remote script before switching the live release.
