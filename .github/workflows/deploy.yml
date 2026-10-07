@@ -17,10 +17,11 @@ concurrency:
 env:
   NODE_VERSION: "22"
   DEPLOY_PATH: /var/www/sadat-upgrade
+  DEPLOY_PORT: "22"
   DOMAIN: SadaatUpgrade.com
-  # Public host key for 145.79.8.231 (used to pin known_hosts — never disable host-key checking).
+  # Public ed25519 host key of the VPS (145.79.8.231). Host-key verification is
+  # enabled and pinned — we never disable StrictHostKeyChecking.
   HOST_KEY: "145.79.8.231 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkFZyNI5fKXpJ75KI2Dd+zSsHE7DR/dkoPeJGqLh/Pd"
-  HOST_FINGERPRINT: "SHA256:L4szq0xsrrrzldtmtwp5FPbxIVkVrnrYkY8JtSZ1N6g"
 
 jobs:
   ci:
@@ -68,60 +69,68 @@ jobs:
             -czf ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz" .
           ls -lh .deploy-artifacts/
 
-      - name: Trust host key (pinned; StrictHostKeyChecking stays enabled)
+      # --- SSH wiring (built-in OpenSSH; pinned host key; secrets never echoed) ---
+      - name: Configure SSH (pin host key)
         run: |
           mkdir -p "$HOME/.ssh"
-          echo "${{ env.HOST_KEY }}" >> "$HOME/.ssh/known_hosts"
+          chmod 700 "$HOME/.ssh"
+          echo "$HOST_KEY" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
-      - name: Upload release source
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          fingerprint: ${{ env.HOST_FINGERPRINT }}
-          port: 22
-          source: ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz"
-          target: "${{ env.DEPLOY_PATH }}/releases/"
+      - name: Install deploy key (validate format, fail fast)
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/sadat_deploy"
+          chmod 600 "$HOME/.ssh/sadat_deploy"
+          ssh-keygen -y -f "$HOME/.ssh/sadat_deploy" >/dev/null 2>&1 || {
+            echo "::error title=Deploy key::DEPLOY_SSH_KEY is not a valid private key. Re-add it with the exact BEGIN/END block using real newlines (no quotes, no literal \\n).";
+            exit 1;
+          }
+          echo "deploy key OK"
 
-      # Fail fast on a syntax/logic error in the remote script before switching the live release.
+      - name: Upload release source
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -i "$HOME/.ssh/sadat_deploy" -P "$DEPLOY_PORT" \
+              ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz" \
+              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/releases/sadat-src-${{ env.TS }}.tar.gz"
+
       - name: Remote deploy (build release, switch current, restart, health check)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          fingerprint: ${{ env.HOST_FINGERPRINT }}
-          port: 22
-          script: |
-            set -euo pipefail
-            echo "release=${{ env.TS }}"
-            test -f "${{ env.DEPLOY_PATH }}/releases/sadat-src-${{ env.TS }}.tar.gz"
-            "${{ env.DEPLOY_PATH }}/deploy/bin/deploy.sh" "${{ env.TS }}"
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "\"$DEPLOY_PATH/deploy/bin/deploy.sh\" \"${{ env.TS }}\""
 
       - name: Health check (public HTTPS)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          fingerprint: ${{ env.HOST_FINGERPRINT }}
-          port: 22
-          script: |
-            set -euo pipefail
-            "${{ env.DEPLOY_PATH }}/deploy/bin/healthcheck.sh" "https://${{ env.DOMAIN }}/"
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "$DEPLOY_PATH/deploy/bin/healthcheck.sh https://$DOMAIN/"
 
-      - name: Rollback on health-check failure
+      - name: Rollback on failure
         if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          fingerprint: ${{ env.HOST_FINGERPRINT }}
-          port: 22
-          script: |
-            set -euo pipefail
-            "${{ env.DEPLOY_PATH }}/deploy/bin/rollback.sh" "https://${{ env.DOMAIN }}/"
-            echo "Deployment of ${{ env.TS }} failed; previous release restored."
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              "$DEPLOY_PATH/deploy/bin/rollback.sh https://$DOMAIN/"
+          echo "Deployment of ${{ env.TS }} failed; previous release restored."
