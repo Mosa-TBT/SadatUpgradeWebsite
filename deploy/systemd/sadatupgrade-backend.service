@@ -1,0 +1,25 @@
+[Unit]
+Description=SadaatUpgrade.com Laravel API backend (production)
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/var/www/sadat-upgrade/current/backend
+EnvironmentFile=/var/www/sadat-upgrade/shared/.env
+Environment=APP_ENV=production
+ExecStart=/usr/bin/php artisan serve --host=127.0.0.1 --port=8009
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillMode=mixed
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/var/www/sadat-upgrade/current/backend
+
+[Install]
+WantedBy=multi-user.target

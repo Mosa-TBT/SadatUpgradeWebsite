@@ -1,0 +1,28 @@
+[Unit]
+Description=SadaatUpgrade.com Next.js frontend (production)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/var/www/sadat-upgrade/current
+EnvironmentFile=/var/www/sadat-upgrade/shared/.env
+Environment=NODE_ENV=production
+# Node is installed to /usr/local/bin on this VPS (verified 2026-10-07).
+ExecStart=/usr/local/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3180
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillMode=mixed
+
+# Hardening: run without privileges, private temp, read-only system/home.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/var/www/sadat-upgrade/current
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,131 @@
+# Deploy: SadaatUpgrade.com — production pipeline
+
+name: CI / CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: sadatupgrade-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  DEPLOY_PATH: /var/www/sadat-upgrade
+  DOMAIN: SadaatUpgrade.com
+  # Public host key for 145.79.8.231 (used to pin known_hosts — never disable host-key checking).
+  HOST_KEY: "145.79.8.231 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkFZyNI5fKXpJ75KI2Dd+zSsHE7DR/dkoPeJGqLh/Pd"
+  HOST_FINGERPRINT: "SHA256:L4szq0xsrrrzldtmtwp5FPbxIVkVrnrYkY8JtSZ1N6g"
+
+jobs:
+  ci:
+    name: CI (lint + build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Persist build for deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-check
+          path: .next
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy to production
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TS: ${{ github.run_number }}-${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare source tarball (no node_modules / .next / .git)
+        run: |
+          tar \
+            --exclude=node_modules --exclude=.next --exclude=.git \
+            --exclude=backend/vendor --exclude=backend/storage \
+            -czf "sadat-src-${{ env.TS }}.tar.gz" .
+
+      - name: Trust host key (pinned; StrictHostKeyChecking stays enabled)
+        run: |
+          mkdir -p "$HOME/.ssh"
+          echo "${{ env.HOST_KEY }}" >> "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Upload release source
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ env.HOST_FINGERPRINT }}
+          port: 22
+          source: "sadat-src-${{ env.TS }}.tar.gz"
+          target: "${{ env.DEPLOY_PATH }}/releases/"
+
+      # Fail fast on a syntax/logic error in the remote script before switching the live release.
+      - name: Remote deploy (build release, switch current, restart, health check)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ env.HOST_FINGERPRINT }}
+          port: 22
+          script: |
+            set -euo pipefail
+            echo "release=${{ env.TS }}"
+            test -f "${{ env.DEPLOY_PATH }}/releases/sadat-src-${{ env.TS }}.tar.gz"
+            "${{ env.DEPLOY_PATH }}/deploy/bin/deploy.sh" "${{ env.TS }}"
+
+      - name: Health check (public HTTPS)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ env.HOST_FINGERPRINT }}
+          port: 22
+          script: |
+            set -euo pipefail
+            "${{ env.DEPLOY_PATH }}/deploy/bin/healthcheck.sh" "https://${{ env.DOMAIN }}/"
+
+      - name: Rollback on health-check failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          fingerprint: ${{ env.HOST_FINGERPRINT }}
+          port: 22
+          script: |
+            set -euo pipefail
+            "${{ env.DEPLOY_PATH }}/deploy/bin/rollback.sh" "https://${{ env.DOMAIN }}/"
+            echo "Deployment of ${{ env.TS }} failed; previous release restored."
