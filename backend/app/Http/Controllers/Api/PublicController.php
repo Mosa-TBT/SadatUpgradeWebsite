@@ -206,17 +206,16 @@ class PublicController extends Controller
 
         $urls = collect();
 
-        Page::query()->where('status', 'published')->get(['slug', 'updated_at'])->each(function ($page) use ($urls) {
-            $urls->push(['loc' => url('/'.($page->slug === 'home' ? '' : $page->slug)), 'lastmod' => $page->updated_at?->toAtomString()]);
-        });
+        // The website exposes exactly four public pages: Home, About, Services, Contact.
+        $publicSlugs = ['home', 'about', 'services', 'contact'];
 
-        Post::query()->where('status', 'published')->get(['slug', 'updated_at'])->each(function ($post) use ($urls) {
-            $urls->push(['loc' => url('/blog/'.$post->slug), 'lastmod' => $post->updated_at?->toAtomString()]);
-        });
-
-        foreach (['services', 'portfolio', 'pricing', 'careers', 'about', 'contact'] as $path) {
-            $urls->push(['loc' => url('/'.$path), 'lastmod' => now()->toAtomString()]);
-        }
+        Page::query()
+            ->whereIn('slug', $publicSlugs)
+            ->where('status', 'published')
+            ->get(['slug', 'updated_at'])
+            ->each(function ($page) use ($urls) {
+                $urls->push(['loc' => url('/'.($page->slug === 'home' ? '' : $page->slug)), 'lastmod' => $page->updated_at?->toAtomString()]);
+            });
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
 

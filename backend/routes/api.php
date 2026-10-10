@@ -139,16 +139,14 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'active'])->group(function (
     Route::post('menus/{menuId}/reorder', [MenuController::class, 'reorder'])->middleware('permission:navigation.update');
 
     /* Pages */
-    Route::get('pages/blocks', [PageController::class, 'blocks'])->middleware('permission:pages.view');
-    Route::get('pages', [PageController::class, 'index'])->middleware('permission:pages.view');
-    Route::post('pages', [PageController::class, 'store'])->middleware('permission:pages.create');
-    Route::get('pages/{id}', [PageController::class, 'show'])->middleware('permission:pages.view');
+Route::get('pages/blocks', [PageController::class, 'blocks'])->middleware('permission:pages.view');
+Route::get('pages', [PageController::class, 'index'])->middleware('permission:pages.view');
+Route::get('pages/{id}', [PageController::class, 'show'])->middleware('permission:pages.view');
     Route::put('pages/{id}', [PageController::class, 'update'])->middleware('permission:pages.update');
     Route::delete('pages/{id}', [PageController::class, 'destroy'])->middleware('permission:pages.delete');
     Route::post('pages/{id}/publish', [PageController::class, 'publish'])->middleware('permission:pages.publish');
     Route::post('pages/{id}/schedule', [PageController::class, 'schedule'])->middleware('permission:pages.publish');
-    Route::post('pages/{id}/duplicate', [PageController::class, 'duplicate'])->middleware('permission:pages.create');
-    Route::put('pages/{id}/sections', [PageController::class, 'syncSections'])->middleware('permission:pages.update');
+Route::put('pages/{id}/sections', [PageController::class, 'syncSections'])->middleware('permission:pages.update');
     Route::get('pages/{id}/revisions', [PageController::class, 'revisions'])->middleware('permission:pages.view');
     Route::post('pages/{id}/revisions/{revision}/restore', [PageController::class, 'restoreRevision'])->middleware('permission:pages.update');
 

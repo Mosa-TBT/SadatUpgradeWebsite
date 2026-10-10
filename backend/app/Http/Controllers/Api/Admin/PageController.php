@@ -42,28 +42,6 @@ class PageController extends Controller
         );
     }
 
-    public function store(Request $request): JsonResponse
-    {
-        $this->authorize('create', Page::class);
-
-        $data = $this->validatePage($request);
-        $sections = $data['sections'] ?? [];
-        unset($data['sections']);
-
-        $data['author_id'] = $data['author_id'] ?? $request->user()->id;
-        $data['slug'] = $data['slug'] ?? Str::slug($data['title']);
-
-        $page = DB::transaction(function () use ($data, $sections, $request) {
-            $page = Page::create($data);
-            $this->applySections($page, $sections, $request->user()->id);
-            $this->snapshot($page, $request->user()->id, 'Initial version');
-
-            return $page;
-        });
-
-        return $this->created($page->load('sections'), 'Page created');
-    }
-
     public function show(string $id): JsonResponse
     {
         $page = Page::with(['sections', 'author:id,name', 'featuredMedia'])->withCount('revisions')->findOrFail($id);
@@ -131,26 +109,6 @@ class PageController extends Controller
         $page->update(['status' => 'scheduled', 'published_at' => $data['published_at']]);
 
         return $this->ok($page, 'Page scheduled');
-    }
-
-    public function duplicate(string $id, Request $request): JsonResponse
-    {
-        $page = Page::with('sections')->findOrFail($id);
-        $this->authorize('create', Page::class);
-
-        $copy = $page->replicate();
-        $copy->title = $page->title.' Copy';
-        $copy->slug = $page->slug.'-copy-'.Str::lower(Str::random(4));
-        $copy->status = 'draft';
-        $copy->is_system = false;
-        $copy->is_home = false;
-        $copy->save();
-
-        foreach ($page->sections as $section) {
-            $copy->sections()->create($section->only(['type', 'name', 'sort_order', 'data', 'is_active']));
-        }
-
-        return $this->created($copy->load('sections'), 'Page duplicated');
     }
 
     public function syncSections(Request $request, string $id): JsonResponse

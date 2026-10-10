@@ -63,6 +63,24 @@ npm ci --no-audit --no-fund
 echo "--> npm run build (this can take a few minutes)"
 npm run build
 
+# Backend (Laravel) release prep, if the backend is present in the repo.
+if [ -d "$RELEASE_DIR/backend" ] && [ -f "$RELEASE_DIR/backend/artisan" ]; then
+  ln -sfn "$SHARED/backend.env" "$RELEASE_DIR/backend/.env" 2>/dev/null || true
+  # Durable storage: keep Laravel storage in the shared dir across releases.
+  mkdir -p "$SHARED/laravel-storage/app/public/uploads/team" \
+           "$SHARED/laravel-storage/framework/sessions" \
+           "$SHARED/laravel-storage/framework/cache" \
+           "$SHARED/laravel-storage/framework/views" \
+           "$SHARED/laravel-storage/logs"
+  chmod 750 "$SHARED/laravel-storage" "$SHARED/laravel-storage/framework" "$SHARED/laravel-storage/logs" 2>/dev/null || true
+  rm -rf "$RELEASE_DIR/backend/public/storage"
+  ln -sfn "$SHARED/laravel-storage" "$RELEASE_DIR/backend/storage"
+  ln -sfn "../storage/app/public" "$RELEASE_DIR/backend/public/storage"
+  echo "--> composer install (backend)"
+  (cd "$RELEASE_DIR/backend" && composer install --no-dev --optimize-autoloader --no-interaction --no-progress) \
+    || echo "WARN: backend composer install failed" >&2
+fi
+
 # 4. Switch live release (remember previous for rollback)
 mkdir -p "$SHARED"
 PREV=""

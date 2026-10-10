@@ -133,6 +133,40 @@ class SettingService
                 }
             }
 
+            // Normalize single-value contact settings into the multi-value lists
+            // so public consumers have one consistent source of truth.
+            $emails = array_values(array_filter((array) ($result['general']['contact_emails'] ?? [])));
+            if ($emails === [] && ! empty($result['general']['contact_email'] ?? null)) {
+                $emails = [$result['general']['contact_email']];
+            }
+            $result['general']['contact_emails'] = $emails;
+
+            $phones = array_values(array_filter((array) ($result['general']['contact_phones'] ?? [])));
+            if ($phones === [] && ! empty($result['general']['contact_phone'] ?? null)) {
+                $phones = [$result['general']['contact_phone']];
+            }
+            $result['general']['contact_phones'] = $phones;
+
+            // Build social_links from the legacy per-platform keys until an
+            // admin saves an explicit structured list.
+            $links = array_values(array_filter((array) ($result['social']['social_links'] ?? [])));
+            if ($links === []) {
+                $legacy = [
+                    'facebook' => $result['social']['social_facebook'] ?? null,
+                    'instagram' => $result['social']['social_instagram'] ?? null,
+                    'linkedin' => $result['social']['social_linkedin'] ?? null,
+                    'x' => $result['social']['social_x'] ?? null,
+                    'youtube' => $result['social']['social_youtube'] ?? null,
+                    'github' => $result['social']['social_github'] ?? null,
+                ];
+                foreach ($legacy as $platform => $url) {
+                    if (! empty($url)) {
+                        $links[] = ['platform' => $platform, 'url' => $url, 'is_active' => true];
+                    }
+                }
+            }
+            $result['social']['social_links'] = $links;
+
             return $result;
         });
     }

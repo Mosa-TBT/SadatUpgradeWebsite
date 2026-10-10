@@ -40,6 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# runtime artifacts (never commit)
+/.chat-store/
+/dev-err.log
+/dev-out.log
+
 # Laravel backend
 /backend/vendor/
 /backend/.env

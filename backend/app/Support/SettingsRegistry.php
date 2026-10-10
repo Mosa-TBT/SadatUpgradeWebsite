@@ -27,7 +27,9 @@ class SettingsRegistry
                 'site_description' => ['type' => 'text', 'default' => 'A digital innovation company delivering web development, mobile apps, UI/UX design and digital marketing.', 'public' => true, 'label' => 'Site Description'],
                 'tagline' => ['type' => 'string', 'default' => 'Digital Solutions That Drive Results', 'public' => true, 'label' => 'Tagline'],
                 'contact_email' => ['type' => 'email', 'default' => 'hello@sadatupgrade.com', 'public' => true, 'label' => 'Contact Email'],
+                'contact_emails' => ['type' => 'json', 'default' => [], 'public' => true, 'label' => 'Additional Contact Emails', 'ui_type' => 'list'],
                 'contact_phone' => ['type' => 'string', 'default' => '+1 (555) 123-4567', 'public' => true, 'label' => 'Contact Phone'],
+                'contact_phones' => ['type' => 'json', 'default' => [], 'public' => true, 'label' => 'Additional Contact Phones', 'ui_type' => 'list'],
                 'address' => ['type' => 'string', 'default' => 'New York, NY 10001, United States', 'public' => true, 'label' => 'Address'],
                 'timezone' => ['type' => 'select', 'default' => 'UTC', 'public' => false, 'label' => 'Timezone', 'options' => self::timezones()],
                 'default_language' => ['type' => 'string', 'default' => 'en', 'public' => true, 'label' => 'Default Language'],
@@ -81,6 +83,18 @@ class SettingsRegistry
                 'social_x' => ['type' => 'url', 'default' => 'https://x.com', 'public' => true, 'label' => 'X (Twitter)'],
                 'social_youtube' => ['type' => 'url', 'default' => 'https://youtube.com', 'public' => true, 'label' => 'YouTube'],
                 'social_github' => ['type' => 'url', 'default' => '', 'public' => true, 'label' => 'GitHub'],
+                'social_links' => [
+                    'type' => 'json',
+                    'default' => [],
+                    'public' => true,
+                    'label' => 'Social Media Links',
+                    'ui_type' => 'repeater',
+                    'item_fields' => [
+                        ['key' => 'platform', 'label' => 'Platform', 'type' => 'select', 'options' => ['facebook' => 'Facebook', 'instagram' => 'Instagram', 'linkedin' => 'LinkedIn', 'x' => 'X (Twitter)', 'youtube' => 'YouTube', 'github' => 'GitHub'], 'required' => true],
+                        ['key' => 'url', 'label' => 'Profile URL', 'type' => 'url', 'required' => true],
+                        ['key' => 'is_active', 'label' => 'Show on website', 'type' => 'boolean'],
+                    ],
+                ],
             ],
             'seo' => [
                 'seo_title' => ['type' => 'string', 'default' => 'Sadat Upgrade - Transform Your Business with Digital Solutions', 'public' => true, 'label' => 'Default SEO Title'],
