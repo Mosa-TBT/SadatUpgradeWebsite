@@ -79,9 +79,11 @@ if [ -d "$RELEASE_DIR/backend" ] && [ -f "$RELEASE_DIR/backend/artisan" ]; then
   echo "--> composer install (backend)"
   (cd "$RELEASE_DIR/backend" && composer install --no-dev --optimize-autoloader --no-interaction --no-progress) \
     || echo "WARN: backend composer install failed" >&2
+  echo "--> backend maintenance (migrate + flush caches)"
+  (cd "$RELEASE_DIR/backend" && php artisan migrate --force) || echo "WARN: backend migration step failed" >&2
+  (cd "$RELEASE_DIR/backend" && php artisan cache:clear) || echo "WARN: backend cache clear failed" >&2
+  (cd "$RELEASE_DIR/backend" && php artisan config:clear) || echo "WARN: backend config clear failed" >&2
 fi
-
-# 4. Switch live release (remember previous for rollback)
 mkdir -p "$SHARED"
 PREV=""
 if [ -L "$CURRENT" ]; then
@@ -101,6 +103,14 @@ elif [ -n "$PREV" ] || systemctl is-active --quiet sadatupgrade-frontend.service
 else
   echo "WARNING: service not previously active; start it after first volume setup" >&2
   sudo -n systemctl start sadatupgrade-frontend.service || true
+fi
+
+# Restart the Laravel backend too (its unit runs `php artisan serve` from
+# current/backend; without a restart it keeps serving the previous release).
+if systemctl list-unit-files --quiet sadatupgrade-backend.service 2>/dev/null; then
+  sudo -n systemctl restart sadatupgrade-backend.service \
+    && echo "--> backend service restarted" \
+    || echo "WARN: backend service restart failed" >&2
 fi
 
 # 6. Health check with rollback
