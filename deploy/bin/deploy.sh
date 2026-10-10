@@ -79,10 +79,6 @@ if [ -d "$RELEASE_DIR/backend" ] && [ -f "$RELEASE_DIR/backend/artisan" ]; then
   echo "--> composer install (backend)"
   (cd "$RELEASE_DIR/backend" && composer install --no-dev --optimize-autoloader --no-interaction --no-progress) \
     || echo "WARN: backend composer install failed" >&2
-  echo "--> backend maintenance (migrate + flush caches)"
-  (cd "$RELEASE_DIR/backend" && php artisan migrate --force) || echo "WARN: backend migration step failed" >&2
-  (cd "$RELEASE_DIR/backend" && php artisan cache:clear) || echo "WARN: backend cache clear failed" >&2
-  (cd "$RELEASE_DIR/backend" && php artisan config:clear) || echo "WARN: backend config clear failed" >&2
 fi
 mkdir -p "$SHARED"
 PREV=""
@@ -106,11 +102,18 @@ else
 fi
 
 # Restart the Laravel backend too (its unit runs `php artisan serve` from
-# current/backend; without a restart it keeps serving the previous release).
-if systemctl list-unit-files --quiet sadatupgrade-backend.service 2>/dev/null; then
-  sudo -n systemctl restart sadatupgrade-backend.service \
-    && echo "--> backend service restarted" \
-    || echo "WARN: backend service restart failed" >&2
+# current/backend; without a restart+flush it keeps serving the previous
+# release's code and cached public config).
+if [ -d "$CURRENT/backend" ] && [ -f "$CURRENT/backend/artisan" ]; then
+  ARTISAN="/usr/bin/php $CURRENT/backend/artisan"
+  (cd "$CURRENT/backend" && /usr/bin/php artisan migrate --force) || echo "WARN: backend migrate step failed" >&2
+  (cd "$CURRENT/backend" && /usr/bin/php artisan cache:clear) || echo "WARN: backend cache:clear failed" >&2
+  (cd "$CURRENT/backend" && /usr/bin/php artisan config:clear) || echo "WARN: backend config:clear failed" >&2
+  if systemctl list-unit-files | grep -q '^sadatupgrade-backend.service'; then
+    sudo -n systemctl restart sadatupgrade-backend.service \
+      && echo "--> backend service restarted" \
+      || echo "WARN: backend service restart failed" >&2
+  fi
 fi
 
 # 6. Health check with rollback
