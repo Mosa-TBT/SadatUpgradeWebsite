@@ -1,3 +1,4 @@
+
 # Deploy: SadaatUpgrade.com — production pipeline
 
 name: CI / CD
@@ -19,14 +20,16 @@ env:
   DEPLOY_PATH: /var/www/sadat-upgrade
   DEPLOY_PORT: "22"
   DOMAIN: SadaatUpgrade.com
-  # Public ed25519 host key of the VPS (145.79.8.231). Host-key verification is
-  # enabled and pinned — we never disable StrictHostKeyChecking.
+
+  # Public ed25519 host key of the VPS (145.79.8.231).
+  # Host-key verification remains enabled.
   HOST_KEY: "145.79.8.231 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkFZyNI5fKXpJ75KI2Dd+zSsHE7DR/dkoPeJGqLh/Pd"
 
 jobs:
   ci:
     name: CI (lint + build)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,48 +56,67 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     env:
       TS: ${{ github.run_number }}-${{ github.sha }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Prepare source tarball (no node_modules / .next / .git)
         run: |
+          set -euo pipefail
+
           mkdir -p .deploy-artifacts
+
           tar --warning=no-file-changed --ignore-failed-read \
-            --exclude=node_modules --exclude=.next --exclude=.git \
-            --exclude=backend/vendor --exclude=backend/storage \
+            --exclude=node_modules \
+            --exclude=.next \
+            --exclude=.git \
+            --exclude=backend/vendor \
+            --exclude=backend/storage \
             --exclude=.deploy-artifacts \
-            -czf ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz" .
+            -czf ".deploy-artifacts/sadat-src-${TS}.tar.gz" .
+
           ls -lh .deploy-artifacts/
 
-      # --- SSH wiring (built-in OpenSSH; pinned host key; secrets never echoed) ---
+      # SSH configuration: pinned host key, strict verification.
       - name: Configure SSH (pin host key)
         run: |
+          set -euo pipefail
+
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
-          echo "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+
+          printf '%s\n' "$HOST_KEY" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
-      - name: Install deploy key (normalize + validate, fail fast)
+      # DEPLOY_SSH_KEY must contain the Base64-encoded
+      # bytes of the existing OpenSSH private key.
+      - name: Install deploy key (decode Base64 + validate)
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
-          key=$(printf '%s' "$DEPLOY_SSH_KEY")
-          # Tolerate common secret-storage artifacts: literal "\n" escapes, CR, edge whitespace.
-          key=$(printf '%s' "$key" | sed -e 's/\\n/\n/g' -e 's/\r$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-          # Strip one layer of matching surrounding quotes, if the secret was pasted quoted.
-          if [[ "$key" == \"*\" ]] || [[ "$key" == \'*\' ]]; then
-            key="${key:1:${#key}-2}"
-          fi
-          printf '%s\n' "$key" > "$HOME/.ssh/sadat_deploy"
-          chmod 600 "$HOME/.ssh/sadat_deploy"
-          if ! ssh-keygen -y -f "$HOME/.ssh/sadat_deploy" >/dev/null 2>&1; then
-            echo "::error title=Deploy key::DEPLOY_SSH_KEY is still not a valid private key after normalization. The secret must contain the complete PEM/OpenSSH block (BEGIN/END lines) with real newlines and nothing else."
+
+          if [[ -z "${DEPLOY_SSH_KEY:-}" ]]; then
+            echo "::error title=Deploy key::DEPLOY_SSH_KEY secret is empty or unavailable."
             exit 1
           fi
+
+          printf '%s' "$DEPLOY_SSH_KEY" \
+            | tr -d '[:space:]' \
+            | base64 --decode > "$HOME/.ssh/sadat_deploy"
+
+          chmod 600 "$HOME/.ssh/sadat_deploy"
+
+          if ! ssh-keygen -y -f "$HOME/.ssh/sadat_deploy" >/dev/null 2>&1; then
+            rm -f "$HOME/.ssh/sadat_deploy"
+            echo "::error title=Deploy key::Decoded DEPLOY_SSH_KEY is not a valid private key."
+            exit 1
+          fi
+
           echo "deploy key OK"
 
       - name: Upload release source
@@ -102,31 +124,43 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          scp -o BatchMode=yes -o StrictHostKeyChecking=yes \
+          set -euo pipefail
+
+          scp -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" -P "$DEPLOY_PORT" \
-              ".deploy-artifacts/sadat-src-${{ env.TS }}.tar.gz" \
-              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/releases/sadat-src-${{ env.TS }}.tar.gz"
+              -i "$HOME/.ssh/sadat_deploy" \
+              -P "$DEPLOY_PORT" \
+              ".deploy-artifacts/sadat-src-${TS}.tar.gz" \
+              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/releases/sadat-src-${TS}.tar.gz"
 
       - name: Remote deploy (build release, switch current, restart, health check)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+          set -euo pipefail
+
+          ssh -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
+              -i "$HOME/.ssh/sadat_deploy" \
+              -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
-              "\"$DEPLOY_PATH/deploy/bin/deploy.sh\" \"${{ env.TS }}\""
+              "\"$DEPLOY_PATH/deploy/bin/deploy.sh\" \"$TS\""
 
       - name: Health check (public HTTPS)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+          set -euo pipefail
+
+          ssh -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
+              -i "$HOME/.ssh/sadat_deploy" \
+              -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
               "$DEPLOY_PATH/deploy/bin/healthcheck.sh https://$DOMAIN/"
 
@@ -136,9 +170,14 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+          set -euo pipefail
+
+          ssh -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
+              -i "$HOME/.ssh/sadat_deploy" \
+              -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
               "$DEPLOY_PATH/deploy/bin/rollback.sh https://$DOMAIN/"
-          echo "Deployment of ${{ env.TS }} failed; previous release restored."
+
+          echo "Deployment of $TS failed; previous release restored."
