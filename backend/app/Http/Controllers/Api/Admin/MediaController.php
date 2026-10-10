@@ -66,6 +66,15 @@ class MediaController extends Controller
             'alt' => ['nullable', 'string', 'max:255'],
         ]);
 
+        // Surface the real reason when the web-server/PHP rejects an upload
+        // (size limits, missing temp dir, interrupted transfer). The generic
+        // "The files.0 failed to upload." gives no actionable detail.
+        $invalid = $this->invalidUploads($request);
+        if ($invalid !== []) {
+            $key = array_key_first($invalid);
+            return $this->error($invalid[$key][0], 422, $invalid);
+        }
+
         $folder = $request->input('folder', 'uploads');
         $uploaded = [];
 
@@ -93,6 +102,48 @@ class MediaController extends Controller
         }
 
         return $this->created(count($uploaded) === 1 ? $uploaded[0] : $uploaded, 'Uploaded successfully');
+    }
+
+    /**
+     * Detect uploads the web server rejected before Laravel ever saw a valid
+     * file (size limits, missing temp dir, interrupted transfer).
+     *
+     * @return array<string, array<int, string>> keyed by input key (e.g. "files.0")
+     */
+    protected function invalidUploads(Request $request): array
+    {
+        $errors = [];
+
+        foreach (['file', 'files'] as $source) {
+            if (! $request->hasFile($source)) {
+                continue;
+            }
+
+            $uploaded = $request->file($source);
+
+            if (is_array($uploaded)) {
+                foreach ($uploaded as $index => $file) {
+                    if ($file instanceof \Illuminate\Http\UploadedFile && ! $file->isValid()) {
+                        $errors["{$source}.{$index}"] = [$this->uploadFailureMessage($file->getError())];
+                    }
+                }
+            } elseif ($uploaded instanceof \Illuminate\Http\UploadedFile && ! $uploaded->isValid()) {
+                $errors[$source] = [$this->uploadFailureMessage($uploaded->getError())];
+            }
+        }
+
+        return $errors;
+    }
+
+    protected function uploadFailureMessage(int $error): string
+    {
+        return match ($error) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The image is larger than the server upload limit. Reduce the file size, or ask the administrator to raise upload_max_filesize / post_max_size / client_max_body_size.',
+            UPLOAD_ERR_PARTIAL => 'The image upload was interrupted. Please try again.',
+            UPLOAD_ERR_NO_TMP_DIR => 'The server temporary upload directory is unavailable. Please contact the administrator.',
+            UPLOAD_ERR_NO_FILE => 'No file was selected.',
+            default => 'The image upload was rejected by the server. Please try again or contact the administrator.',
+        };
     }
 
     public function show(int $id): JsonResponse
@@ -124,8 +175,13 @@ class MediaController extends Controller
         $media = Media::findOrFail($id);
         $this->authorize('delete', $media);
 
+        try {
+            $this->media->delete($media);
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
+        }
+
         $this->audit->log('media.deleted', null, ['filename' => $media->original_name], [], 'Media deleted');
-        $this->media->delete($media);
 
         return $this->ok(null, 'Media deleted');
     }
@@ -142,8 +198,12 @@ class MediaController extends Controller
         $media = Media::whereIn('id', $data['ids'])->get();
         $count = $media->count();
 
-        foreach ($media as $item) {
-            $this->media->delete($item);
+        try {
+            foreach ($media as $item) {
+                $this->media->delete($item);
+            }
+        } catch (RuntimeException $e) {
+            return $this->error($e->getMessage(), 422);
         }
 
         $this->audit->log('media.bulk_deleted', null, [], ['count' => $count], "Deleted {$count} media items");

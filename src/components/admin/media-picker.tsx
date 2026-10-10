@@ -48,6 +48,10 @@ export function MediaPicker({ open, onClose, onSelect, accept = "image", multipl
 
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
+    if (Array.from(files).some((f) => f.size > 50 * 1024 * 1024)) {
+      toast.error("That file is larger than 50 MB. Please reduce its size or upload a smaller image.");
+      return;
+    }
     const formData = new FormData();
     Array.from(files).forEach((f) => formData.append("files[]", f));
     setUploading(true);

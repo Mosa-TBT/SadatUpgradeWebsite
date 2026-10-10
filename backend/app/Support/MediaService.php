@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use App\Models\Media;
+use App\Models\Setting;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -57,8 +59,54 @@ class MediaService
 
     public function delete(Media $media): void
     {
+        $inUse = $this->referencingPlaces($media);
+
+        if ($inUse !== []) {
+            throw new RuntimeException('This image is still used by '.implode(', ', $inUse).'. Remove the reference there before deleting it.');
+        }
+
         Storage::disk($media->disk)->delete(array_filter([$media->path, $media->thumb_path]));
         $media->forceDelete();
+    }
+
+    /**
+     * Where is this media item still referenced? Checks the content/media FK
+     * columns plus the media-typed branding/SEO settings. Returning non-empty
+     * means the physical file must NOT be removed.
+     *
+     * @return array<int, string> human-readable reference labels
+     */
+    protected function referencingPlaces(Media $media): array
+    {
+        $id = $media->id;
+        $found = [];
+
+        $checks = [
+            'users' => 'avatar_media_id',
+            'pages' => 'featured_media_id',
+            'services' => 'image_media_id',
+            'projects' => 'image_media_id',
+            'posts' => 'featured_media_id',
+            'testimonials' => 'avatar_media_id',
+            'team_members' => 'image_media_id',
+        ];
+
+        foreach ($checks as $table => $column) {
+            if (DB::table($table)->where($column, $id)->exists()) {
+                $found[] = "{$table}.{$column}";
+            }
+        }
+
+        Setting::query()
+            ->where('value', (string) $id)
+            ->get()
+            ->each(function (Setting $setting) use ($id, &$found): void {
+                if (str_starts_with($setting->group, 'branding') || ($setting->group === 'seo' && $setting->key === 'og_image')) {
+                    $found[] = "settings.{$setting->group}.{$setting->key}";
+                }
+            });
+
+        return array_values(array_unique($found));
     }
 
     protected function guard(UploadedFile $file): void

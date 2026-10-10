@@ -65,6 +65,10 @@ export default function MediaPage() {
 
   const upload = async (files: FileList | null) => {
     if (!files?.length) return;
+    if (Array.from(files).some((f) => f.size > 50 * 1024 * 1024)) {
+      toast.error("That file is larger than 50 MB. Please reduce its size or upload a smaller file.");
+      return;
+    }
     const fd = new FormData();
     Array.from(files).forEach((f) => fd.append("files[]", f));
     setUploading(true);
