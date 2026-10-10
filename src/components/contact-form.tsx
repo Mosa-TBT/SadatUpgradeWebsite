@@ -60,13 +60,20 @@ export function ContactForm() {
         ok?: boolean;
         error?: string;
         errors?: Record<string, string[]>;
+        emailSent?: boolean;
+        persisted?: boolean;
       } | null;
 
       if (res.ok && data?.ok) {
         setValues(EMPTY);
         setStatus({
           type: "success",
-          message: "Thank you! Your message has been sent. We'll get back to you within 24 hours.",
+          message:
+            data.emailSent === true
+              ? "Thank you! Your message has been sent. We'll get back to you within 24 hours."
+              : data.persisted === true
+                ? "Thank you! We received your message and will reply to you within 24 hours."
+                : "Thank you! Your message has been recorded.",
         });
       } else {
         const firstError = data?.errors

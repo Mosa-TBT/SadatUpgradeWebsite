@@ -58,6 +58,14 @@ function sanitize(value: unknown): string {
     .slice(0, 500);
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * The official business inbox for Contact Form submissions. Overridable via
+ * CONTACT_RECIPIENT. A provider acceptance response is not inbox delivery.
+ */
+const DEFAULT_RECIPIENT = "mohammad.musa@sadaatupgrade.com";
+
 export async function sendInquiryEmail({
   name,
   email,
@@ -72,7 +80,7 @@ export async function sendInquiryEmail({
     return { configured: false, sent: false };
   }
 
-  const to = process.env.CONTACT_RECIPIENT || "baregzay123@gmail.com";
+  const to = process.env.CONTACT_RECIPIENT || DEFAULT_RECIPIENT;
   const subject = `${source} — ${sanitize(name)} (${sanitize(email)})`;
 
   const text = [
@@ -87,9 +95,15 @@ export async function sendInquiryEmail({
     String(message ?? "").slice(0, 5000),
   ].join("\n");
 
+  // The visitor is NEVER used as the From address (SPF/DKIM would break).
+  // We reply from the verified sender and set Reply-To to the visitor so the
+  // business inbox can simply hit "reply" (only when the address is valid).
+  const visitor = typeof email === "string" && EMAIL_RE.test(email.trim()) ? email.trim() : undefined;
+
   await transporter().sendMail({
     from: process.env.CONTACT_FROM || process.env.SMTP_USER,
     to,
+    replyTo: visitor,
     subject,
     text,
   });
@@ -100,6 +114,6 @@ export async function sendInquiryEmail({
 export function mailerStatus(): MailerStatus {
   return {
     configured: isConfigured(),
-    recipient: process.env.CONTACT_RECIPIENT || "baregzay123@gmail.com",
+    recipient: process.env.CONTACT_RECIPIENT || DEFAULT_RECIPIENT,
   };
 }
