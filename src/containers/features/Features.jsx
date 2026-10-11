@@ -6,23 +6,23 @@ import "./Features.css";
 const featuresData = [
   {
     id: 1,
-    title: "Advanced Language Understanding",
-    text: "GPT-Bot understands nuance, tone and context, so talking to him feels like talking to a person — not programming a machine.",
+    title: "Modern Web Experiences",
+    text: "We design and develop responsive, high-performance websites that combine elegant design, smooth interactions, and intuitive user experiences to help your business stand out online.",
   },
   {
     id: 2,
-    title: "A Personality You Can Tune",
-    text: "Formal at work, playful at home. Adjust GPT-Bot's voice, humor and behavior until he fits your life perfectly.",
+    title: "Custom Software Development",
+    text: "Turn complex business challenges into practical digital solutions. We build tailored software that streamlines workflows, improves productivity, and adapts to your organization's needs.",
   },
   {
     id: 3,
-    title: "Always By Your Side",
-    text: "He floats from room to room, connects to your devices through our API, and is ready to help before you finish asking.",
+    title: "AI & Intelligent Automation",
+    text: "Make technology work smarter for your business. We integrate AI-powered tools and intelligent automation to reduce repetitive tasks, simplify operations, and create new opportunities.",
   },
   {
     id: 4,
-    title: "Learns Every Day",
-    text: "GPT-Bot keeps learning from every interaction — with your permission — becoming more helpful, and more you, over time.",
+    title: "Reliable Digital Transformation",
+    text: "From the first idea to deployment and ongoing improvements, we help businesses adopt the right technologies, strengthen their digital presence, and grow with confidence.",
   },
 ];
 
@@ -34,6 +34,7 @@ const Features = () => {
   const trackGlow = (e) => {
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
+
     card.style.setProperty("--mx", `${e.clientX - rect.left}px`);
     card.style.setProperty("--my", `${e.clientY - rect.top}px`);
   };
@@ -42,14 +43,15 @@ const Features = () => {
     <section className="features section__padding" id="features" ref={scope}>
       <div className="features__heading">
         <p className="eyebrow" data-reveal>
-          Case studies
+          What Sets Us Apart
         </p>
+
         <h2 data-split>
-          The Future is Now and You Just Need to Realize It. Step into the
-          Future Today and Make it Happen.
+          Smart Technology. Meaningful Solutions. A Better Digital Future.
         </h2>
-        <a className="features__link" href="#blog" data-reveal>
-          Request Early Access to Get Started
+
+        <a className="features__link" href="#contact" data-reveal>
+          Let's Build Something Great
           <span aria-hidden="true">&rarr;</span>
         </a>
       </div>
@@ -61,7 +63,10 @@ const Features = () => {
             key={feature.id}
             onMouseMove={trackGlow}
           >
-            <Feature title={feature.title} text={feature.text} />
+            <Feature
+              title={feature.title}
+              text={feature.text}
+            />
           </div>
         ))}
       </div>

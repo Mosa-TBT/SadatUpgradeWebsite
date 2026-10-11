@@ -12,62 +12,99 @@ const Footer = () => {
       <div className="floor floor--static" aria-hidden="true">
         <div className="floor__grid" />
       </div>
+
       <div className="footer__wrapper">
         <h2 className="footer__heading" data-split>
-          Do you want to step in to the future before others
+          Ready to build something extraordinary with technology?
         </h2>
-        <button type="button" className="footer__btn" data-reveal>
-          Request Early Access
-        </button>
+
+        <a
+          href="mailto:info@sadatupgrade.com"
+          className="footer__btn"
+          data-reveal
+        >
+          Start a Project
+          <span aria-hidden="true">&rarr;</span>
+        </a>
 
         <div className="footer__links" data-reveal-group>
           <div className="footer__brand">
-            <p className="footer__logo">
-              GPT<span>-Bot</span>
+            <a
+              href="#home"
+              className="footer__logo"
+              aria-label="Sadat Upgrade home"
+            >
+              Sadat <span>Upgrade</span>
+            </a>
+
+            <p>
+              We build modern websites, custom software, and intelligent
+              digital solutions that help businesses move forward.
             </p>
-            <p>GPT-Bot &copy; 2026 &mdash; a concept experience</p>
+
+            <p>
+              Sadat Upgrade &copy; {new Date().getFullYear()} — All rights
+              reserved.
+            </p>
           </div>
+
           <div className="footer__section">
-            <span>GPT-Bot</span>
+            <span>Our Services</span>
             <ul>
-              <li>For Everyone</li>
-              <li>For Teams</li>
-              <li>For Enterprises</li>
-              <li>GPT-Bot login</li>
-              <li>Download</li>
+              <li>
+                <a href="#services">Web Design & Development</a>
+              </li>
+              <li>
+                <a href="#services">Custom Software</a>
+              </li>
+              <li>
+                <a href="#services">AI & Automation</a>
+              </li>
+              <li>
+                <a href="#services">Digital Solutions</a>
+              </li>
             </ul>
           </div>
+
           <div className="footer__section">
-            <span>Company</span>
+            <span>Explore</span>
             <ul>
-              <li>About us</li>
-              <li>News</li>
-              <li>Our Charter</li>
-              <li>Security</li>
-              <li>Residency</li>
-              <li>Careers</li>
+              <li>
+                <a href="#about">About Us</a>
+              </li>
+              <li>
+                <a href="#portfolio">Our Projects</a>
+              </li>
+              <li>
+                <a href="#contact">Contact Us</a>
+              </li>
             </ul>
           </div>
+
           <div className="footer__section">
-            <span>Terms &amp; policies</span>
+            <span>Get in Touch</span>
             <ul>
-              <li>Terms of use</li>
-              <li>Privacy policy</li>
-              <li>Brand guidelines</li>
-              <li>Other policies</li>
+              <li>
+                <a href="mailto:info@sadatupgrade.com">
+                  Email Us
+                </a>
+              </li>
+              <li>
+                <a href="#contact">Discuss Your Project</a>
+              </li>
             </ul>
           </div>
         </div>
       </div>
 
       <div className="footer__wordmark" aria-hidden="true" data-reveal>
-        GPT-BOT
+        SADAT UPGRADE
       </div>
 
       <div className="footer__copyright">
         <p>
-          This site is protected by reCAPTCHA and the Google Privacy Policy and
-          Terms of Service apply.
+          We create digital experiences with a focus on quality, usability,
+          and long-term value.
         </p>
       </div>
     </footer>

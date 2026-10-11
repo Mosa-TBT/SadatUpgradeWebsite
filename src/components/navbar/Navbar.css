@@ -151,3 +151,87 @@
     display: block;
   }
 }
+
+
+/* Sadat Upgrade brand logo */
+.navbar__logo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.navbar__logo-image {
+  display: block;
+  width: auto;
+  height: 48px;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+/* Desktop actions */
+.navbar__explore {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.navbar__explore:hover {
+  color: #047857;
+}
+
+.navbar__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #047857;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.navbar__cta:hover {
+  background: #065f46;
+  transform: translateY(-1px);
+}
+
+.navbar__cta span {
+  font-size: 18px;
+}
+
+/* Mobile menu */
+.navbar__mobile-eyebrow {
+  margin-bottom: 18px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.navbar__mobile-link {
+  display: block;
+  padding: 12px 0;
+}
+
+.navbar__mobile-caption {
+  margin-top: 14px;
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .navbar__logo-image {
+    height: 42px;
+    max-width: 155px;
+  }
+}

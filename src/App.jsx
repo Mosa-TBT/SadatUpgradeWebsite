@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Footer, Blog, Possibility, Features, Main, Info } from "./containers";
+import { Footer, Blog, Possibility, Features, Main, Info, Team, ContactUs } from "./containers";
 import { Cta, Brand, Navbar, Preloader } from "./components";
 import "./App.css";
 
@@ -18,6 +18,8 @@ const App = () => {
       <Possibility />
       <Cta />
       <Blog />
+      <Team />
+      <ContactUs />
       <Footer />
     </div>
   );

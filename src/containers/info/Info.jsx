@@ -10,41 +10,47 @@ const Info = () => {
 
   return (
     <section className="info section__padding" id="info" ref={scope}>
+      {/* Section introduction */}
       <div className="info__intro" data-reveal>
         <Feature
-          title="What is GPT-Bot"
-          text="GPT-Bot is an autonomous assistant robot and the most advanced model in the GPT series. He floats in the air, sees, listens and talks — a companion, not just a tool."
+          title="What Is Sadat Upgrade?"
+          text="Sadat Upgrade is an IT services company focused on transforming ideas into practical digital solutions. From modern websites and custom software to AI-powered experiences, we help businesses simplify their work, strengthen their digital presence, and unlock new opportunities for growth."
         />
       </div>
 
       <div className="info__layout">
+        {/* Sticky heading */}
         <div className="info__sticky">
           <h2 className="info__heading" data-split>
-            The possibilities are beyond your imagination
+            Technology that transforms ideas into possibilities.
           </h2>
-          <a className="info__link" href="#blog" data-reveal>
-            Explore The Library
+
+          <a className="info__link" href="#services" data-reveal>
+            Explore Our Services
             <span aria-hidden="true">&rarr;</span>
           </a>
         </div>
 
+        {/* Service highlights */}
         <div className="info__cards" data-reveal-group>
           <div className="info__card">
             <Feature
-              title="Natural Conversation"
-              text="Talk to GPT-Bot like a friend. He understands context, remembers your preferences and responds in real time — from customer support to daily planning."
+              title="Web Design & Development"
+              text="We create modern, responsive, and high-performance websites that communicate your brand, deliver exceptional user experiences, and turn visitors into customers."
             />
           </div>
+
           <div className="info__card">
             <Feature
-              title="Floating Knowledge Base"
-              text="GPT-Bot hovers by your side with instant answers on nearly any topic — homework help, deep research, or settling dinner-table debates."
+              title="Custom Software Solutions"
+              text="Every business has unique challenges. We develop tailored software and digital systems that streamline workflows, improve efficiency, and help your organization operate smarter."
             />
           </div>
+
           <div className="info__card">
             <Feature
-              title="Patient Tutor"
-              text="He explains new concepts at your pace, quizzes you along the way, and turns boring lessons into missions worth finishing."
+              title="AI & Digital Innovation"
+              text="Bring artificial intelligence into your business with intelligent automation, AI-powered experiences, and innovative digital tools designed to reduce repetitive work and open new possibilities."
             />
           </div>
         </div>

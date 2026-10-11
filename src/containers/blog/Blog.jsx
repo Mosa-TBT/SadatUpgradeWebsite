@@ -1,63 +1,74 @@
 import { useRef } from "react";
-import { Article } from "../../components";
 import {
   gsap,
   useGSAP,
   reveals,
   isReducedMotion,
 } from "../../lib/gsapSetup";
-import { blog01, blog02, blog03, blog04, blog05 } from "./blog.data";
 import "./Blog.css";
 
-const articles = [
+const projects = [
   {
     id: 1,
-    imgUrl: blog01,
-    date: "2026-07-08",
-    title: "Inside GPT-Bot: How We Taught a Robot to Float",
+    name: "Time Travel Caravan",
+    category: "Tourism & Travel",
+    image: "/TIMETRAVELCARAVAN.png",
+    description:
+      "A modern tourism platform showcasing Afghanistan's historical landmarks, rich cultural heritage, breathtaking landscapes, and unique travel experiences. Built to help travelers discover the country's destinations through an engaging digital experience.",
+    technologies: ["Tourism Platform", "Responsive Design", "Web Development"],
   },
   {
     id: 2,
-    imgUrl: blog02,
-    date: "2026-07-01",
-    title: "A Day With GPT-Bot: Your Assistant From Morning to Night",
+    name: "MCIT Task Management System",
+    category: "Government & Enterprise",
+    image: "/MCIT.png",
+    description:
+      "A web-based task planning, reporting, and monitoring system developed for Afghanistan's Ministry of Communications and Information Technology. It supports task assignment, progress tracking, departmental workflows, role-based access, dashboards, notifications, and organizational reporting.",
+    technologies: ["Laravel", "Next.js", "MySQL"],
   },
   {
     id: 3,
-    imgUrl: blog03,
-    date: "2026-07-15",
-    title: "Voice, Vision and Personality: The Tech Behind GPT-Bot",
+    name: "Danisha Zad",
+    category: "Digital Solutions",
+    image: "/DANISHAZAD.png",
+    description:
+      "A digital project featured in the Sadat Upgrade portfolio. Its specific purpose and functionality will be described accurately once the project's details are confirmed.",
+    technologies: ["Web Development", "Digital Experience"],
   },
   {
     id: 4,
-    imgUrl: blog04,
-    date: "2026-07-22",
-    title: "Why Floating Robots Are the Future of Home AI",
-  },
-  {
-    id: 5,
-    imgUrl: blog05,
-    date: "2026-07-29",
-    title: "GPT-Bot in the Classroom: Tutoring, Reimagined",
+    name: "ACF APR System",
+    category: "NGO & Reporting",
+    image: "/ACF.png",
+    description:
+      "A reporting and workflow platform built to support ACF's APR operations. The system combines a Laravel backend and Next.js frontend, with reporting-related services and Kobo form submission synchronization to support structured data collection and reporting workflows.",
+    technologies: ["Laravel", "Next.js", "Kobo Integration"],
   },
 ];
 
-const Blog = () => {
+const Projects = () => {
   const scope = useRef(null);
 
   useGSAP(
     () => {
       reveals(scope.current);
+
       if (isReducedMotion()) return;
 
-      // pinned horizontal filmstrip — desktop only
       const mm = gsap.matchMedia();
+
       mm.add("(min-width: 900px)", () => {
-        const track = scope.current.querySelector(".blog__track");
+        const track = scope.current?.querySelector(".blog__track");
+        const progressFill = scope.current?.querySelector(
+          ".blog__progress-fill",
+        );
+
+        if (!track) return;
+
         const getDistance = () =>
           Math.max(0, track.scrollWidth - window.innerWidth);
 
-        const tl = gsap.timeline({
+        const timeline = gsap.timeline({
           scrollTrigger: {
             trigger: scope.current,
             start: "top top",
@@ -69,38 +80,82 @@ const Blog = () => {
           },
         });
 
-        tl.to(track, { x: () => -getDistance(), ease: "none" }, 0).fromTo(
-          ".blog__progress-fill",
-          { scaleX: 0 },
-          { scaleX: 1, ease: "none" },
+        timeline.to(
+          track,
+          {
+            x: () => -getDistance(),
+            ease: "none",
+          },
           0,
         );
+
+        if (progressFill) {
+          timeline.fromTo(
+            progressFill,
+            { scaleX: 0 },
+            { scaleX: 1, ease: "none" },
+            0,
+          );
+        }
       });
+
+      return () => mm.revert();
     },
     { scope },
   );
 
   return (
-    <section className="blog" id="blog" ref={scope}>
+    <section className="blog projects" id="portfolio" ref={scope}>
       <div className="blog__pin">
         <div className="blog__header">
           <p className="eyebrow" data-reveal>
-            Library
+            Selected Work
           </p>
-          <h2 data-split>A lot is happening, We are blogging about it.</h2>
+
+          <h2 data-split>
+            Real Projects. Meaningful Impact. Digital Experiences That Matter.
+          </h2>
+
+          <p className="projects__intro" data-reveal>
+            From tourism platforms to enterprise systems, we turn complex
+            requirements into practical digital solutions.
+          </p>
+
           <div className="blog__progress" aria-hidden="true">
             <div className="blog__progress-fill" />
           </div>
         </div>
 
-        <div className="blog__track">
-          {articles.map((article) => (
-            <Article
-              key={article.id}
-              imgUrl={article.imgUrl}
-              date={article.date}
-              title={article.title}
-            />
+        <div className="blog__track projects__track">
+          {projects.map((project) => (
+            <article className="projects__card" key={project.id}>
+              <div className="projects__image">
+                <img
+                  src={project.image}
+                  alt={`${project.name} project preview`}
+                  loading="lazy"
+                />
+              </div>
+
+              <div className="projects__content">
+                <p className="projects__category">{project.category}</p>
+
+                <h3>{project.name}</h3>
+
+                <p className="projects__description">
+                  {project.description}
+                </p>
+
+                <div
+                  className="projects__technologies"
+                  aria-label="Project technologies and capabilities"
+                >
+                  {project.technologies.map((technology) => (
+                    <span key={technology}>{technology}</span>
+                  ))}
+                </div>
+              </div>
+            </article>
           ))}
         </div>
       </div>
@@ -108,4 +163,4 @@ const Blog = () => {
   );
 };
 
-export default Blog;
+export default Projects;

@@ -1,5 +1,10 @@
 import { useRef } from "react";
-import { gsap, useGSAP, reveals, isReducedMotion } from "../../lib/gsapSetup";
+import {
+  gsap,
+  useGSAP,
+  reveals,
+  isReducedMotion,
+} from "../../lib/gsapSetup";
 import "./CTA.css";
 
 const Cta = () => {
@@ -8,18 +13,31 @@ const Cta = () => {
   useGSAP(
     () => {
       reveals(scope.current);
+
       if (isReducedMotion()) return;
 
-      // magnetic button
+      // Magnetic button effect
       const btn = scope.current.querySelector(".cta__btn");
-      const xTo = gsap.quickTo(btn, "x", { duration: 0.4, ease: "power3" });
-      const yTo = gsap.quickTo(btn, "y", { duration: 0.4, ease: "power3" });
+
+      if (!btn) return;
+
+      const xTo = gsap.quickTo(btn, "x", {
+        duration: 0.4,
+        ease: "power3",
+      });
+
+      const yTo = gsap.quickTo(btn, "y", {
+        duration: 0.4,
+        ease: "power3",
+      });
 
       const move = (e) => {
         const r = btn.getBoundingClientRect();
+
         xTo((e.clientX - r.left - r.width / 2) * 0.35);
         yTo((e.clientY - r.top - r.height / 2) * 0.45);
       };
+
       const reset = () => {
         xTo(0);
         yTo(0);
@@ -27,6 +45,7 @@ const Cta = () => {
 
       btn.addEventListener("mousemove", move);
       btn.addEventListener("mouseleave", reset);
+
       return () => {
         btn.removeEventListener("mousemove", move);
         btn.removeEventListener("mouseleave", reset);
@@ -36,15 +55,24 @@ const Cta = () => {
   );
 
   return (
-    <section className="cta section__margin" ref={scope}>
+    <section className="cta section__margin" id="cta" ref={scope}>
       <div className="cta__wrapper" data-reveal>
         <div className="cta__content">
-          <p>Request Early Access to Get Started</p>
-          <h3>Register today &amp; be the first to bring GPT-Bot home</h3>
+          <p>Ready to Upgrade Your Business?</p>
+
+          <h3>
+            Let's turn your ideas into powerful digital solutions.
+          </h3>
         </div>
-        <button type="button" className="cta__btn">
-          Get Started
-        </button>
+
+        <a
+          className="cta__btn"
+          href="mailto:info@sadatupgrade.com"
+          aria-label="Contact Sadat Upgrade by email"
+        >
+          Let's Talk
+          <span aria-hidden="true">&rarr;</span>
+        </a>
       </div>
     </section>
   );
