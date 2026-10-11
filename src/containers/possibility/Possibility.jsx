@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import {
   gsap,
   useGSAP,
@@ -79,7 +79,7 @@ const Possibility = () => {
         </p>
 
         <a className="possibility__link" href="#contact" data-reveal>
-          Let's Bring Your Idea to Life
+          Let&apos;s Bring Your Idea to Life
           <span aria-hidden="true">&rarr;</span>
         </a>
       </div>

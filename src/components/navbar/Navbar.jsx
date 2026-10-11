@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { RiMenu3Line, RiCloseLine } from "react-icons/ri";
 import {
   gsap,
@@ -31,6 +32,11 @@ const Menu = ({ onNavigate, mobile = false }) => (
     ))}
   </ul>
 );
+
+Menu.propTypes = {
+  onNavigate: PropTypes.func,
+  mobile: PropTypes.bool,
+};
 
 const Navbar = () => {
   const [toggleMenu, setToggleMenu] = useState(false);

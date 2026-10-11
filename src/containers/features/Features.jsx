@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import { Feature } from "../../components";
 import { useGSAP, reveals } from "../../lib/gsapSetup";
 import "./Features.css";
@@ -51,7 +51,7 @@ const Features = () => {
         </h2>
 
         <a className="features__link" href="#contact" data-reveal>
-          Let's Build Something Great
+          Let&apos;s Build Something Great
           <span aria-hidden="true">&rarr;</span>
         </a>
       </div>

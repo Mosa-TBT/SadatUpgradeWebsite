@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import PropTypes from "prop-types";
 import {
   gsap,
@@ -14,7 +14,7 @@ import SoftAurora from "../../components/ui/SoftAurora";
 import "./Main.css";
 
 const phrases = [
-  "Hi! I'm your Sadat Upgrade assistant.",
+  "Hi! I&apos;m your Sadat Upgrade assistant.",
   "Need a website? Let's build something amazing.",
   "Have an idea? Let's turn it into reality.",
   "Your next digital upgrade starts here.",
@@ -296,7 +296,7 @@ const Main = ({ booted }) => {
       <div className="hero__inner">
         <div className="hero__content">
           <p className="hero__eyebrow eyebrow">
-            SADAT UPGRADE — YOUR DIGITAL INNOVATION PARTNER
+            SADAT UPGRADE â€” YOUR DIGITAL INNOVATION PARTNER
           </p>
 
           <h1 className="hero__title">
@@ -328,7 +328,7 @@ const Main = ({ booted }) => {
             />
 
             <button type="submit">
-              Let's Build Together
+              Let&apos;s Build Together
             </button>
           </form>
 
@@ -358,7 +358,7 @@ const Main = ({ booted }) => {
               aria-atomic="true"
             >
               <p className="hero__bubble-text">
-                Hi! I'm your Sadat Upgrade assistant.
+                Hi! I&apos;m your Sadat Upgrade assistant.
               </p>
             </div>
           </div>

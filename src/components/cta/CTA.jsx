@@ -1,4 +1,4 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import {
   gsap,
   useGSAP,
@@ -61,7 +61,7 @@ const Cta = () => {
           <p>Ready to Upgrade Your Business?</p>
 
           <h3>
-            Let's turn your ideas into powerful digital solutions.
+            Let&apos;s turn your ideas into powerful digital solutions.
           </h3>
         </div>
 
@@ -70,7 +70,7 @@ const Cta = () => {
           href="mailto:info@sadatupgrade.com"
           aria-label="Contact Sadat Upgrade by email"
         >
-          Let's Talk
+          Let&apos;s Talk
           <span aria-hidden="true">&rarr;</span>
         </a>
       </div>
