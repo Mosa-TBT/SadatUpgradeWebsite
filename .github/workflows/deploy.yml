@@ -1,5 +1,4 @@
-
-# Deploy: SadaatUpgrade.com — production pipeline
+# Deploy: SadaatUpgrade.com — Vite (React) SPA pipeline
 
 name: CI / CD
 
@@ -17,38 +16,44 @@ concurrency:
 
 env:
   NODE_VERSION: "22"
+  PNPM_VERSION: "11.22.0"
   DEPLOY_PATH: /var/www/sadat-upgrade
   DEPLOY_PORT: "22"
   DOMAIN: SadaatUpgrade.com
-
-  # Public ed25519 host key of the VPS (145.79.8.231).
-  # Host-key verification remains enabled.
+  # Public ed25519 host key of the VPS. Host-key verification is enabled and
+  # pinned — we never disable StrictHostKeyChecking.
   HOST_KEY: "145.79.8.231 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIkFZyNI5fKXpJ75KI2Dd+zSsHE7DR/dkoPeJGqLh/Pd"
 
 jobs:
   ci:
-    name: CI (lint + build)
+    name: CI (install + lint + build)
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: package-lock.json
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
-      - name: Build
-        run: npm run build
+      - name: Build (Vite)
+        run: pnpm build
+
+      - name: Verify static output
+        run: test -f dist/index.html && echo "dist/index.html OK"
 
   deploy:
     name: Deploy to production
@@ -56,67 +61,45 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     env:
       TS: ${{ github.run_number }}-${{ github.sha }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare source tarball (no node_modules / .next / .git)
+      - name: Prepare source tarball (no node_modules / dist / .git)
         run: |
-          set -euo pipefail
-
           mkdir -p .deploy-artifacts
-
           tar --warning=no-file-changed --ignore-failed-read \
-            --exclude=node_modules \
-            --exclude=.next \
-            --exclude=.git \
-            --exclude=backend/vendor \
-            --exclude=backend/storage \
+            --exclude=node_modules --exclude=dist --exclude=.git \
             --exclude=.deploy-artifacts \
-            -czf ".deploy-artifacts/sadat-src-${TS}.tar.gz" .
-
+            -czf ".deploy-artifacts/sadat-web-${{ env.TS }}.tar.gz" .
           ls -lh .deploy-artifacts/
 
-      # SSH configuration: pinned host key, strict verification.
       - name: Configure SSH (pin host key)
         run: |
-          set -euo pipefail
-
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
-
-          printf '%s\n' "$HOST_KEY" > "$HOME/.ssh/known_hosts"
+          echo "$HOST_KEY" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
-      # DEPLOY_SSH_KEY must contain the Base64-encoded
-      # bytes of the existing OpenSSH private key.
-      - name: Install deploy key (decode Base64 + validate)
+      - name: Install deploy key (decode Base64 + validate, fail fast)
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
-
-          if [[ -z "${DEPLOY_SSH_KEY:-}" ]]; then
-            echo "::error title=Deploy key::DEPLOY_SSH_KEY secret is empty or unavailable."
-            exit 1
+          key=$(printf '%s' "$DEPLOY_SSH_KEY")
+          key=$(printf '%s' "$key" | sed -e 's/\\n/\n/g' -e 's/\r$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          if [[ "$key" == \"*\" ]] || [[ "$key" == \'*\' ]]; then
+            key="${key:1:${#key}-2}"
           fi
-
-          printf '%s' "$DEPLOY_SSH_KEY" \
-            | tr -d '[:space:]' \
-            | base64 --decode > "$HOME/.ssh/sadat_deploy"
-
+          echo "$key" | base64 --decode > "$HOME/.ssh/sadat_deploy" 2>/dev/null || \
+            { printf '%s\n' "$key" > "$HOME/.ssh/sadat_deploy"; }
           chmod 600 "$HOME/.ssh/sadat_deploy"
-
           if ! ssh-keygen -y -f "$HOME/.ssh/sadat_deploy" >/dev/null 2>&1; then
-            rm -f "$HOME/.ssh/sadat_deploy"
-            echo "::error title=Deploy key::Decoded DEPLOY_SSH_KEY is not a valid private key."
+            echo "::error title=Deploy key::DEPLOY_SSH_KEY is not a valid private key (PEM/OpenSSH block)."
             exit 1
           fi
-
           echo "deploy key OK"
 
       - name: Upload release source
@@ -124,60 +107,34 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          set -euo pipefail
-
-          scp -o BatchMode=yes \
-              -o StrictHostKeyChecking=yes \
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" \
-              -P "$DEPLOY_PORT" \
-              ".deploy-artifacts/sadat-src-${TS}.tar.gz" \
-              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/releases/sadat-src-${TS}.tar.gz"
+              -i "$HOME/.ssh/sadat_deploy" -P "$DEPLOY_PORT" \
+              ".deploy-artifacts/sadat-web-${{ env.TS }}.tar.gz" \
+              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/releases/sadat-web-${{ env.TS }}.tar.gz"
 
-      - name: Remote deploy (build release, switch current, restart, health check)
+      - name: Remote deploy (install, build, atomic switch, health check)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          set -euo pipefail
-
-          ssh -o BatchMode=yes \
-              -o StrictHostKeyChecking=yes \
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" \
-              -p "$DEPLOY_PORT" \
+              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
-              "\"$DEPLOY_PATH/deploy/bin/deploy.sh\" \"$TS\""
+              "if [ -x \"$DEPLOY_PATH/deploy/bin/deploy-vite.sh\" ]; then \"$DEPLOY_PATH/deploy/bin/deploy-vite.sh\" \"${{ env.TS }}\"; else echo '::error title=Vite deploy::deploy-vite.sh is not installed on the server. Deploy the server-side script (repo deploy/bin/deploy-vite.sh) first.'; exit 1; fi"
 
       - name: Health check (public HTTPS)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          set -euo pipefail
-
-          ssh -o BatchMode=yes \
-              -o StrictHostKeyChecking=yes \
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" \
-              -p "$DEPLOY_PORT" \
+              -i "$HOME/.ssh/sadat_deploy" -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
-              "$DEPLOY_PATH/deploy/bin/healthcheck.sh https://$DOMAIN/"
+              "curl -fsS -o /dev/null https://$DOMAIN/ && echo 'HTTPS OK'"
 
-      - name: Rollback on failure
+      - name: Report rollback status
         if: failure()
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          set -euo pipefail
-
-          ssh -o BatchMode=yes \
-              -o StrictHostKeyChecking=yes \
-              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -i "$HOME/.ssh/sadat_deploy" \
-              -p "$DEPLOY_PORT" \
-              "$DEPLOY_USER@$DEPLOY_HOST" \
-              "$DEPLOY_PATH/deploy/bin/rollback.sh https://$DOMAIN/"
-
-          echo "Deployment of $TS failed; previous release restored."
+        run: echo "Deployment of ${{ env.TS }} failed; previous web release is preserved by the remote script's rollback."

@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+:root {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Manrope", sans-serif;
+
+  --accent-violet: #b26bff;
+  --accent-ember: #ff7b54;
+
+  --gradient-text: linear-gradient(92deg, #b26bff 0%, #ff7b54 100%);
+  --gradient-accent: linear-gradient(92deg, #b26bff 0%, #ff7b54 100%);
+
+  --color-bg: #050506;
+  --color-surface: #0d0d10;
+  --color-line: rgba(255, 255, 255, 0.09);
+  --color-heading: #f4f4f2;
+  --color-text: #9aa3ad;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: unset;
+  text-decoration: none;
+}
+
+button,
+input {
+  font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+}
+
+::selection {
+  background: var(--accent-violet);
+  color: #050506;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #b26bff, #ff7b54);
+  border-radius: 8px;
+  border: 2px solid var(--color-bg);
+}

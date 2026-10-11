@@ -1,0 +1,70 @@
+.brand {
+  overflow: hidden;
+  border-block: 1px solid var(--color-line);
+  padding: 2.5rem 0;
+  position: relative;
+}
+
+.brand::before,
+.brand::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.brand::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--color-bg), transparent);
+}
+
+.brand::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--color-bg), transparent);
+}
+
+.brand__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.brand__group {
+  display: flex;
+  align-items: center;
+  gap: 6rem;
+  padding-right: 6rem;
+}
+
+.brand__group img {
+  height: 1.75rem;
+  width: auto;
+  opacity: 0.55;
+  filter: grayscale(1);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.brand__group li:hover img {
+  opacity: 1;
+  filter: grayscale(0);
+  scale: 1.06;
+}
+
+@media screen and (max-width: 768px) {
+  .brand__group {
+    gap: 3.5rem;
+    padding-right: 3.5rem;
+  }
+
+  .brand__group img {
+    height: 1.35rem;
+  }
+
+  .brand::before,
+  .brand::after {
+    width: 4rem;
+  }
+}

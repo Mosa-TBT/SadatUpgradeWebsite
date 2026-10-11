@@ -1,0 +1,129 @@
+.app {
+  width: 100%;
+  /* must stay block-level: pinning a direct flex item breaks ScrollTrigger's pin spacing */
+  display: block;
+  position: relative;
+}
+
+/* film grain overlay */
+.app__grain {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* perspective grid floor — the robot floats above this */
+.floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.floor__grid {
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  top: -12%;
+  bottom: 0;
+  transform: perspective(700px) rotateX(62deg);
+  transform-origin: center bottom;
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 40%, transparent 96%);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.95) 40%, transparent 96%);
+  opacity: 0.7;
+  overflow: hidden;
+}
+
+/* the line pattern lives on a pseudo so scroll-driven motion can move it
+   via the --gy variable on the parent — no constant animation: 1px lines
+   drifting on a tilted plane shimmer ("flash") from sub-pixel crawl */
+.floor__grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  top: -64px; /* extra rows so scroll-driven shifts never show a gap */
+  background-image:
+    linear-gradient(rgba(178, 107, 255, 0.34) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(178, 107, 255, 0.34) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: translateY(var(--gy, 0px));
+}
+
+.floor__horizon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(178, 107, 255, 0.65) 30%,
+    rgba(255, 123, 84, 0.65) 70%,
+    transparent
+  );
+  filter: blur(1px);
+  opacity: 0.5;
+}
+
+.floor--static .floor__grid {
+  opacity: 0.45;
+}
+
+.gradient__text {
+  background: var(--gradient-text);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section__padding {
+  width: min(100% - 8rem, 1440px);
+  margin-inline: auto;
+  padding-block: 6rem;
+}
+
+.section__margin {
+  width: min(100% - 8rem, 1440px);
+  margin-inline: auto;
+  margin-block: 4rem;
+}
+
+/* shared eyebrow label */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 2.5rem;
+  height: 2px;
+  background: var(--gradient-accent);
+}
+
+@media screen and (max-width: 768px) {
+  .section__padding {
+    width: min(100% - 3rem, 1440px);
+    padding-block: 4rem;
+  }
+
+  .section__margin {
+    width: min(100% - 3rem, 1440px);
+    margin-block: 3rem;
+  }
+}

@@ -1,0 +1,31 @@
+# SadatUpgrade.com — Vite SPA static vhost (example, owner to adapt to the
+# real vhost). Serve the symlinked dist directory and route unknown paths
+# to index.html so client-side navigation and refresh work.
+#
+# This is a REFERENCE snippet. The owner must apply the equivalent to the
+# actual production vhost. It intentionally does not replace the existing
+# vhost automatically.
+
+<VirtualHost *:80>
+    ServerName SadaatUpgrade.com
+    DocumentRoot /var/www/sadat-upgrade/current-web
+
+    <Directory /var/www/sadat-upgrade/current-web>
+        Options -Indexes +FollowSymLinks
+        AllowOverride None
+        Require all granted
+
+        # SPA history-style fallback -> index.html
+        RewriteEngine On
+        RewriteBase /
+        RewriteRule ^index\.html$ - [L]
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule . /index.html [L]
+    </Directory>
+
+    # Optional: proxy /api to the Laravel backend that keeps serving
+    # the Contact Us form and admin API (kept on the server).
+    # ProxyPass /api http://127.0.0.1:8009/api
+    # ProxyPassReverse /api http://127.0.0.1:8009/api
+</VirtualHost>
