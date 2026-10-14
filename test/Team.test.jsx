@@ -3,11 +3,11 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import Team from "../src/containers/team/Team";
 
 describe("Team", () => {
-  it("renders exactly three members as cards in the about section", () => {
+  it("renders exactly three members as cards in the team section", () => {
     globalThis.__reducedMotion = true;
     render(<Team />);
 
-    expect(document.getElementById("about")).toBeTruthy();
+    expect(document.getElementById("team")).toBeTruthy();
     const cards = screen.getAllByRole("button", { name: /profile/i });
     expect(cards).toHaveLength(3);
     expect(screen.getByText("Sayeed Najmuldin Sadat")).toBeInTheDocument();

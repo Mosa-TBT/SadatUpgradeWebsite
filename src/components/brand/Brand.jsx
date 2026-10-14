@@ -31,9 +31,39 @@ const Brand = () => {
 
       track.addEventListener("mouseenter", slow);
       track.addEventListener("mouseleave", resume);
+
+      // Pause the marquee while it is offscreen or the tab is hidden, and
+      // resume it from the same position (no jump, no reset).
+      let onScreen = true;
+      let tabVisible = typeof document === "undefined" || !document.hidden;
+      const sync = () => {
+        if (onScreen && tabVisible) tween.resume();
+        else tween.pause();
+      };
+
+      let observer = null;
+      if (typeof IntersectionObserver !== "undefined") {
+        observer = new IntersectionObserver(
+          (entries) => {
+            onScreen = entries[0]?.isIntersecting ?? true;
+            sync();
+          },
+          { threshold: 0 },
+        );
+        observer.observe(scope.current);
+      }
+
+      const onVisibility = () => {
+        tabVisible = typeof document !== "undefined" && !document.hidden;
+        sync();
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+
       return () => {
         track.removeEventListener("mouseenter", slow);
         track.removeEventListener("mouseleave", resume);
+        observer?.disconnect();
+        document.removeEventListener("visibilitychange", onVisibility);
       };
     },
     { scope },

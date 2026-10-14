@@ -17,7 +17,8 @@ const Possibility = () => {
 
       if (isReducedMotion()) return;
 
-      // Masked parallax reveal on the visual
+      // Masked reveal on the visual, done with a cropped wrapper + a
+      // transformed child so each scroll frame is compositor-only.
       const st = {
         trigger: ".possibility__image",
         start: "top 90%",
@@ -26,22 +27,12 @@ const Possibility = () => {
       };
 
       gsap.fromTo(
-        ".possibility__image",
-        { clipPath: "inset(18% 18% 18% 18% round 28px)" },
-        {
-          clipPath: "inset(0% 0% 0% 0% round 28px)",
-          ease: "none",
-          scrollTrigger: st,
-        },
-      );
-
-      gsap.fromTo(
         ".possibility__image img",
         { scale: 1.3 },
         {
           scale: 1,
           ease: "none",
-          scrollTrigger: { ...st },
+          scrollTrigger: st,
         },
       );
     },

@@ -40,11 +40,10 @@
   overflow: hidden;
 }
 
-/* the line pattern lives on a pseudo so scroll-driven motion can move it
-   via the --gy variable on the parent — no constant animation: 1px lines
-   drifting on a tilted plane shimmer ("flash") from sub-pixel crawl */
-.floor__grid::before {
-  content: "";
+/* the line pattern lives on its own layer so scroll-driven motion can translate
+   it as a pure compositor transform — no per-frame background repaint, and no
+   custom-property animation that forces style recalculation */
+.floor__grid-lines {
   position: absolute;
   inset: 0;
   top: -64px; /* extra rows so scroll-driven shifts never show a gap */
@@ -93,6 +92,11 @@
   width: min(100% - 8rem, 1440px);
   margin-inline: auto;
   margin-block: 4rem;
+}
+
+/* Keep anchor targets clear of the fixed navbar when navigating via hashes. */
+section[id] {
+  scroll-margin-top: 2rem;
 }
 
 /* shared eyebrow label */

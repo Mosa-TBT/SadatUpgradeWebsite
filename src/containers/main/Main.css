@@ -141,10 +141,27 @@
   will-change: transform;
 }
 
+/* A pre-composed violet aura behind the robot replaces the animated element's
+   per-frame drop-shadow filter. Statically blurred and cached by the
+   compositor, it travels with the float transform without re-rasterizing. */
+.hero__robot-glow {
+  position: absolute;
+  inset: 4% -8% -14% -8%;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(178, 107, 255, 0.55),
+    rgba(178, 107, 255, 0) 66%
+  );
+  filter: blur(34px);
+  pointer-events: none;
+}
+
 .hero__robot {
+  position: relative;
+  z-index: 1;
   height: min(68vh, 620px);
   width: auto;
-  filter: drop-shadow(0 0 60px rgba(178, 107, 255, 0.35));
 }
 
 /* ground shadow that breathes in sync with the float */

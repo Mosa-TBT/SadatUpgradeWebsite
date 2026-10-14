@@ -81,7 +81,7 @@ export default function Team() {
   const selected = active ? MEMBERS.find((member) => member.id === active.id) : null;
 
   return (
-    <section className="team section__padding" id="about" ref={scope}>
+    <section className="team section__padding" id="team" ref={scope}>
       <div className="team__intro" data-reveal>
         <p className="eyebrow">Our Team</p>
         <h2 data-split>The people who build, ship, and support your success.</h2>

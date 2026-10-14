@@ -10,7 +10,9 @@ const Footer = () => {
   return (
     <footer className="footer" ref={scope}>
       <div className="floor floor--static" aria-hidden="true">
-        <div className="floor__grid" />
+        <div className="floor__grid">
+          <div className="floor__grid-lines" />
+        </div>
       </div>
 
       <div className="footer__wrapper">

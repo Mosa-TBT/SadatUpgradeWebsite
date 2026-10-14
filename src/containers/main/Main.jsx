@@ -10,6 +10,7 @@ import {
 import people from "../../assets/people.png";
 import robot from "../../assets/ai_robot.png";
 import SoftAurora from "../../components/ui/SoftAurora";
+import AuroraBoundary from "../../components/ui/AuroraBoundary";
 
 import "./Main.css";
 
@@ -94,7 +95,7 @@ const Main = ({ booted }) => {
         );
 
       // Floating robot animation.
-      gsap.to(".hero__float", {
+      const floatTween = gsap.to(".hero__float", {
         y: -16,
         rotation: 1.4,
         duration: 2.6,
@@ -104,7 +105,7 @@ const Main = ({ booted }) => {
       });
 
       // Shadow breathes in sync with the robot.
-      gsap.to(".hero__shadow", {
+      const shadowTween = gsap.to(".hero__shadow", {
         scaleX: 0.78,
         autoAlpha: 0.45,
         duration: 2.6,
@@ -119,13 +120,15 @@ const Main = ({ booted }) => {
         ".hero__bubble-text",
       );
 
+      let bubbleTl = null;
+
       if (bubble && bubbleText) {
         gsap.set(bubble, {
           autoAlpha: 0,
           scale: 0.5,
         });
 
-        const bubbleTl = gsap.timeline({
+        bubbleTl = gsap.timeline({
           repeat: -1,
           delay: 2.6,
         });
@@ -160,6 +163,45 @@ const Main = ({ booted }) => {
             );
         });
       }
+
+      // Pause the hero's endless ambient tweens while the hero is not on
+      // screen or the tab is hidden; they resume exactly where they left off.
+      const heroEl = scope.current;
+      let heroOnScreen = true;
+      let tabVisible = typeof document === "undefined" || !document.hidden;
+
+      const syncHeroActivity = () => {
+        const active = heroOnScreen && tabVisible;
+        [floatTween, shadowTween, bubbleTl]
+          .filter(Boolean)
+          .forEach((tween) => {
+            if (active) tween.resume();
+            else tween.pause();
+          });
+      };
+
+      let heroObserver = null;
+      if (typeof IntersectionObserver !== "undefined") {
+        heroObserver = new IntersectionObserver(
+          (entries) => {
+            heroOnScreen = entries[0]?.isIntersecting ?? true;
+            syncHeroActivity();
+          },
+          { threshold: 0 },
+        );
+        if (heroEl) heroObserver.observe(heroEl);
+      }
+
+      const onVisibility = () => {
+        tabVisible = typeof document !== "undefined" && !document.hidden;
+        syncHeroActivity();
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+
+      return () => {
+        heroObserver?.disconnect();
+        document.removeEventListener("visibilitychange", onVisibility);
+      };
     },
     {
       scope,
@@ -213,8 +255,15 @@ const Main = ({ booted }) => {
           .to(
             ".floor__grid",
             {
-              "--gy": "140px",
               opacity: 0.9,
+              duration: 2.5,
+            },
+            0,
+          )
+          .to(
+            ".floor__grid-lines",
+            {
+              y: 140,
               duration: 2.5,
             },
             0,
@@ -274,18 +323,22 @@ const Main = ({ booted }) => {
     <section className="hero" id="home" ref={scope}>
       {!isReducedMotion() && (
         <div className="hero__aurora" aria-hidden="true">
-          <SoftAurora
-            color1="#10b981"
-            color2="#3b82f6"
-            brightness={0.45}
-            speed={0.6}
-            mouseInfluence={0}
-          />
+          <AuroraBoundary>
+            <SoftAurora
+              color1="#10b981"
+              color2="#3b82f6"
+              brightness={0.45}
+              speed={0.6}
+              mouseInfluence={0}
+            />
+          </AuroraBoundary>
         </div>
       )}
 
       <div className="floor" aria-hidden="true">
-        <div className="floor__grid" />
+        <div className="floor__grid">
+          <div className="floor__grid-lines" />
+        </div>
         <div className="floor__horizon" />
       </div>
 
@@ -346,6 +399,7 @@ const Main = ({ booted }) => {
 
         <div className="hero__visual">
           <div className="hero__float">
+            <div className="hero__robot-glow" aria-hidden="true" />
             <img
               className="hero__robot"
               src={robot}

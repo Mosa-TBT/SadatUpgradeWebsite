@@ -1,5 +1,6 @@
 import { Renderer, Program, Mesh, Triangle } from "ogl";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import "./SoftAurora.css";
 
 interface SoftAuroraProps {
   speed?: number;
@@ -160,6 +161,15 @@ void main() {
 }
 `;
 
+/**
+ * Static, zero-work substitute shown when WebGL cannot initialize or is lost.
+ * Visuals mirror the aurora's green/blue/violet wash so a missing canvas is
+ * never a visual hole in the hero.
+ */
+export function StaticAurora() {
+  return <div aria-hidden="true" className="soft-aurora-fallback" />;
+}
+
 export default function SoftAurora({
   speed = 0.6,
   scale = 1.5,
@@ -177,91 +187,107 @@ export default function SoftAurora({
   mouseInfluence = 0.25,
 }: SoftAuroraProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     /* v8 ignore next -- React guarantees the ref is set before effects run */
     if (!containerRef.current) return;
     const container = containerRef.current;
-    const renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
-    const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
 
-    let program: Program;
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+
+    let renderer: Renderer | null = null;
+    let program: Program | null = null;
+    let geometry: Triangle | null = null;
+    let mesh: Mesh | null = null;
+    let canvas: HTMLCanvasElement | null = null;
+
+    let destroyed = false;
+    let contextLost = false;
+    let regionVisible = true;
+    let documentVisible = typeof document === "undefined" || !document.hidden;
+    let animationFrameId = 0;
+    let pendingFrame = false;
+
     let currentMouse = [0.5, 0.5];
     let targetMouse = [0.5, 0.5];
+    // Accumulated animation time (ms). Only grows while we are actually
+    // rendering, so pause/resume never jumps or doubles the timeline.
+    let accumulatedTime = 0;
+    let lastTick: number | null = null;
+    let io: IntersectionObserver | null = null;
 
-    function handleMouseMove(e: MouseEvent) {
-      const rect = gl.canvas.getBoundingClientRect();
+    const onMouseMove = (e: MouseEvent) => {
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
       targetMouse = [
-        (e.clientX - rect.left) / rect.width,
-        1.0 - (e.clientY - rect.top) / rect.height,
+        (e.clientX - rect.left) / (rect.width || 1),
+        1.0 - (e.clientY - rect.top) / (rect.height || 1),
       ];
-    }
+    };
 
-    function handleMouseLeave() {
+    const onMouseLeave = () => {
       targetMouse = [0.5, 0.5];
-    }
+    };
 
     function resize() {
-      renderer.setSize(container.offsetWidth, container.offsetHeight);
+      if (!renderer || !canvas) return;
+      const w = Math.max(1, container.clientWidth);
+      const h = Math.max(1, container.clientHeight);
+      // Bounded, conservative drawing-buffer budget. The aurora is a soft
+      // ambient gradient; capping the longest side keeps fill-rate sane on
+      // wide/4K screens and matches today's budget on common laptops.
+      const cap = Math.min(1, 1440 / Math.max(w, h));
+      renderer.setSize(Math.round(w * cap), Math.round(h * cap));
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
       if (program) {
         program.uniforms.uResolution.value = [
-          gl.canvas.width,
-          gl.canvas.height,
-          gl.canvas.width / gl.canvas.height,
+          canvas.width,
+          canvas.height,
+          canvas.width / canvas.height,
         ];
       }
     }
-    window.addEventListener("resize", resize);
-    resize();
 
-    const geometry = new Triangle(gl);
-    program = new Program(gl, {
-      vertex: vertexShader,
-      fragment: fragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uResolution: {
-          value: [
-            gl.canvas.width,
-            gl.canvas.height,
-            gl.canvas.width / gl.canvas.height,
-          ],
+    function rebuildScene() {
+      if (!renderer) return false;
+      const gl = renderer.gl;
+      geometry = new Triangle(gl);
+      program = new Program(gl, {
+        vertex: vertexShader,
+        fragment: fragmentShader,
+        uniforms: {
+          uTime: { value: 0 },
+          uResolution: {
+            value: [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height],
+          },
+          uSpeed: { value: speed },
+          uScale: { value: scale },
+          uBrightness: { value: brightness },
+          uColor1: { value: hexToVec3(color1) },
+          uColor2: { value: hexToVec3(color2) },
+          uNoiseFreq: { value: noiseFrequency },
+          uNoiseAmp: { value: noiseAmplitude },
+          uBandHeight: { value: bandHeight },
+          uBandSpread: { value: bandSpread },
+          uOctaveDecay: { value: octaveDecay },
+          uLayerOffset: { value: layerOffset },
+          uColorSpeed: { value: colorSpeed },
+          uMouse: { value: new Float32Array([0.5, 0.5]) },
+          uMouseInfluence: { value: mouseInfluence },
+          uEnableMouse: { value: enableMouseInteraction },
         },
-        uSpeed: { value: speed },
-        uScale: { value: scale },
-        uBrightness: { value: brightness },
-        uColor1: { value: hexToVec3(color1) },
-        uColor2: { value: hexToVec3(color2) },
-        uNoiseFreq: { value: noiseFrequency },
-        uNoiseAmp: { value: noiseAmplitude },
-        uBandHeight: { value: bandHeight },
-        uBandSpread: { value: bandSpread },
-        uOctaveDecay: { value: octaveDecay },
-        uLayerOffset: { value: layerOffset },
-        uColorSpeed: { value: colorSpeed },
-        uMouse: { value: new Float32Array([0.5, 0.5]) },
-        uMouseInfluence: { value: mouseInfluence },
-        uEnableMouse: { value: enableMouseInteraction },
-      },
-    });
-
-    const mesh = new Mesh(gl, { geometry, program });
-    container.appendChild(gl.canvas);
-
-    if (enableMouseInteraction) {
-      // listen on window: in the hero the canvas sits under the content,
-      // so canvas-level listeners would only fire in uncovered gaps
-      window.addEventListener("mousemove", handleMouseMove);
-      document.documentElement.addEventListener("mouseleave", handleMouseLeave);
+      });
+      mesh = new Mesh(gl, { geometry, program });
+      return true;
     }
 
-    let animationFrameId: number;
-
-    function update(time: number) {
-      animationFrameId = requestAnimationFrame(update);
-      program.uniforms.uTime.value = time * 0.001;
-
+    function renderFrame() {
+      if (!renderer || !program || !mesh) return;
+      program.uniforms.uTime.value = accumulatedTime * 0.001;
       if (enableMouseInteraction) {
         currentMouse[0] += 0.05 * (targetMouse[0] - currentMouse[0]);
         currentMouse[1] += 0.05 * (targetMouse[1] - currentMouse[1]);
@@ -271,21 +297,159 @@ export default function SoftAurora({
         program.uniforms.uMouse.value[0] = 0.5;
         program.uniforms.uMouse.value[1] = 0.5;
       }
-
       renderer.render({ scene: mesh });
     }
-    animationFrameId = requestAnimationFrame(update);
 
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("resize", resize);
-      if (enableMouseInteraction) {
-        window.removeEventListener("mousemove", handleMouseMove);
-        document.documentElement.removeEventListener("mouseleave", handleMouseLeave);
+    function tick(now: number) {
+      animationFrameId = requestAnimationFrame(tick);
+      if (destroyed || contextLost) return;
+      if (lastTick !== null) accumulatedTime += now - lastTick;
+      lastTick = now;
+      renderFrame();
+    }
+
+    function stopLoop() {
+      lastTick = null;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
       }
-      container.removeChild(gl.canvas);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      pendingFrame = false;
+    }
+
+    function startLoop() {
+      if (contextLost || destroyed) return;
+      if (reducedMotion) {
+        // One still frame so the hero keeps its atmospheric backdrop; no loop.
+        if (!pendingFrame) {
+          pendingFrame = true;
+          renderFrame();
+        }
+        return;
+      }
+      if (animationFrameId) return;
+      animationFrameId = requestAnimationFrame(tick);
+    }
+
+    function refreshActivity() {
+      if (regionVisible && documentVisible) startLoop();
+      else stopLoop();
+    }
+
+    const onVisibility = () => {
+      documentVisible = typeof document !== "undefined" && !document.hidden;
+      refreshActivity();
     };
+
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      contextLost = true;
+      stopLoop();
+    };
+
+    const onContextRestored = () => {
+      if (destroyed) return;
+      try {
+        if (!rebuildScene()) {
+          contextLost = true;
+          setFailed(true);
+          return;
+        }
+      } catch {
+        contextLost = true;
+        setFailed(true);
+        return;
+      }
+      contextLost = false;
+      // Render once on the frame after the context is restored, then let the
+      // normal loop take over if the region is still active.
+      requestAnimationFrame(() => {
+        if (destroyed || contextLost) return;
+        renderFrame();
+        refreshActivity();
+      });
+    };
+
+    /** @description ogl has no dispose(); the standard release path is
+     * WEBGL_lose_context after removing the canvas. */
+    function teardown() {
+      destroyed = true;
+      stopLoop();
+      if (typeof IntersectionObserver !== "undefined" && io) io.disconnect();
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMouseMove);
+      document.documentElement.removeEventListener("mouseleave", onMouseLeave);
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (canvas) {
+        canvas.removeEventListener("webglcontextlost", onContextLost);
+        canvas.removeEventListener("webglcontextrestored", onContextRestored);
+        if (canvas.parentNode === container) container.removeChild(canvas);
+      }
+      if (renderer?.gl) {
+        try {
+          renderer.gl.getExtension("WEBGL_lose_context")?.loseContext();
+        } catch {
+          /* best effort */
+        }
+      }
+      renderer = null;
+      program = null;
+      mesh = null;
+      geometry = null;
+      canvas = null;
+    }
+
+    if (typeof IntersectionObserver !== "undefined") {
+      io = new IntersectionObserver(
+        (entries) => {
+          regionVisible = entries[0]?.isIntersecting ?? true;
+          refreshActivity();
+        },
+        { threshold: 0 },
+      );
+    }
+
+    try {
+      renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
+    } catch {
+      renderer = null;
+    }
+    if (!renderer || !renderer.gl) {
+      setFailed(true);
+      return teardown;
+    }
+
+    canvas = renderer.gl.canvas as HTMLCanvasElement;
+    try {
+      if (!rebuildScene()) {
+        setFailed(true);
+        return teardown;
+      }
+    } catch {
+      setFailed(true);
+      return teardown;
+    }
+
+    const gl = renderer.gl;
+    gl.clearColor(0, 0, 0, 0);
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    canvas.addEventListener("webglcontextrestored", onContextRestored);
+    container.appendChild(canvas);
+
+    window.addEventListener("resize", resize);
+    if (enableMouseInteraction) {
+      // Listen on the window: in the hero the canvas sits under the content,
+      // so canvas-level listeners would only fire in uncovered gaps.
+      window.addEventListener("mousemove", onMouseMove);
+      document.documentElement.addEventListener("mouseleave", onMouseLeave);
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+    if (io) io.observe(container);
+
+    resize();
+    refreshActivity();
+
+    return teardown;
   }, [
     speed,
     scale,
@@ -302,6 +466,8 @@ export default function SoftAurora({
     enableMouseInteraction,
     mouseInfluence,
   ]);
+
+  if (failed) return <StaticAurora />;
 
   return <div ref={containerRef} className="w-full h-full" />;
 }

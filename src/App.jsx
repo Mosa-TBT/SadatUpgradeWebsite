@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Footer, Blog, Possibility, Features, Main, Info, Team, ContactUs } from "./containers";
+import { Footer, Blog, Possibility, Features, Main, Info, About, Services, Team, ContactUs } from "./containers";
 import { Cta, Brand, Navbar, Preloader } from "./components";
 import "./App.css";
 
@@ -14,6 +14,8 @@ const App = () => {
       <Main booted={booted} />
       <Brand />
       <Info />
+      <Services />
+      <About />
       <Features />
       <Possibility />
       <Cta />
