@@ -97,7 +97,14 @@ for ref in $refs; do
   case "$ref" in
     //*) continue ;;   # protocol-relative / external URLs
   esac
-  [ -f "$DIST/$ref" ] || { echo "ERROR: referenced asset missing: /$ref" >&2; miss=1; }
+  [ -f "$DIST/$ref" ] && continue
+  # Bundled JS/CSS and anything under assets/ must exist (hard fail).
+  # Other referenced files (e.g. a favicon) only warn, so a pre-existing
+  # 404 cannot block activation of an otherwise valid bundle.
+  case "$ref" in
+    *.js|*.css|assets/*) echo "ERROR: referenced asset missing: /$ref" >&2; miss=1 ;;
+    *) echo "WARN: referenced file missing (non-critical, ignored): /$ref" >&2 ;;
+  esac
 done
 [ "$miss" -eq 0 ] || exit 1
 [ -d "$DIST/assets" ] && [ -n "$(ls -A "$DIST/assets")" ] || { echo "ERROR: dist/assets missing or empty." >&2; exit 1; }
