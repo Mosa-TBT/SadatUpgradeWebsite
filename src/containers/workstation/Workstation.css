@@ -1,0 +1,783 @@
+/* =========================================================
+   SADAAT UPGRADE — INTERACTIVE 3D WORKSTATION
+   Complete and refined stylesheet
+   ========================================================= */
+
+/* -------------------------
+   Main workstation container
+   ------------------------- */
+
+.workstation {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workstation,
+.workstation * {
+  box-sizing: border-box;
+}
+
+.workstation .ws-heading {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 1.75rem;
+  text-align: center;
+}
+
+.workstation .ws-intro {
+  max-width: 720px;
+  margin: 1rem auto 0;
+  line-height: 1.75;
+  opacity: 0.78;
+  text-wrap: pretty;
+}
+
+/* -------------------------
+   3D scene stage
+   ------------------------- */
+
+.workstation .ws-stage {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 1240px);
+  height: clamp(440px, 66vw, 790px);
+  min-height: 440px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 24px;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 42%,
+      rgba(255, 255, 255, 0.68),
+      transparent 57%
+    ),
+    linear-gradient(
+      145deg,
+      #eee9e1,
+      #d4cbbf
+    );
+
+  box-shadow:
+    0 28px 70px rgba(40, 30, 20, 0.14),
+    0 8px 24px rgba(40, 30, 20, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.workstation .ws-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  touch-action: pan-y;
+}
+
+/* Ensure the React Three Fiber canvas stays inside its stage. */
+
+.workstation .ws-stage > div {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* -------------------------
+   HTML screen inside 3D scene
+   ------------------------- */
+
+.workstation .ws-html-screen {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 2px;
+
+  background: #0b1020;
+  color: #fff;
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+/* -------------------------
+   Start screen overlay
+   ------------------------- */
+
+.workstation .ws-startoverlay {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 4%;
+
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3%;
+
+  border: 0;
+  border-radius: inherit;
+
+  color: #f8fafc;
+  cursor: pointer;
+
+  background:
+    radial-gradient(
+      ellipse at 50% 45%,
+      rgba(23, 113, 86, 0.46),
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      #111827,
+      #07110f 75%
+    );
+
+  font: inherit;
+  text-align: center;
+
+  transition:
+    filter 250ms ease,
+    background 250ms ease;
+}
+
+.workstation .ws-startoverlay:hover {
+  filter: brightness(1.14);
+}
+
+.workstation .ws-startoverlay:focus-visible {
+  outline: 2px solid #6ee7b7;
+  outline-offset: -5px;
+}
+
+.workstation .ws-startoverlay-logo {
+  display: block;
+  width: 10%;
+  min-width: 54px;
+  max-width: 105px;
+  max-height: 24%;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(
+      0 8px 22px rgba(16, 185, 129, 0.18)
+    );
+}
+
+.workstation .ws-startoverlay-title {
+  max-width: 100%;
+  margin: 0;
+
+  font-size: clamp(24px, 4.2cqw, 42px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+
+  text-wrap: balance;
+}
+
+.workstation .ws-startoverlay-sub {
+  max-width: 100%;
+  margin: 0;
+
+  color: #a7f3d0;
+  font-size: clamp(14px, 2.2cqw, 21px);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.workstation .ws-startoverlay-btn {
+  margin-top: 2%;
+  padding: 0.8rem 1.4rem;
+
+  border: 1px solid rgba(110, 231, 183, 0.5);
+  border-radius: 999px;
+
+  background: rgba(16, 185, 129, 0.12);
+  color: #d1fae5;
+
+  font: inherit;
+  font-size: clamp(13px, 1.8cqw, 18px);
+  font-weight: 600;
+
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease;
+}
+
+.workstation .ws-startoverlay-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(110, 231, 183, 0.9);
+  background: rgba(16, 185, 129, 0.24);
+}
+
+/* -------------------------
+   Screen loading state
+   ------------------------- */
+
+.workstation .ws-screen-loading {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+
+  padding: 1rem;
+
+  background: #0f172a;
+  color: #d1fae5;
+
+  font-size: 18px;
+  text-align: center;
+}
+
+/* -------------------------
+   Floating scene controls
+   ------------------------- */
+
+.workstation .ws-hint,
+.workstation .ws-exit {
+  position: absolute;
+  z-index: 5;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+
+  min-height: 42px;
+  max-width: calc(100% - 2rem);
+  padding: 0.8rem 1.15rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 999px;
+
+  background: rgba(22, 29, 29, 0.78);
+  color: #fff;
+
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  text-align: center;
+
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.workstation .ws-hint {
+  right: 1.2rem;
+  bottom: 1.2rem;
+}
+
+.workstation .ws-exit {
+  top: 1.2rem;
+  right: 1.2rem;
+
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.workstation .ws-hint:hover,
+.workstation .ws-exit:hover {
+  transform: translateY(-2px);
+  border-color: rgba(110, 231, 183, 0.7);
+  background: rgba(6, 78, 59, 0.94);
+}
+
+.workstation .ws-hint:focus-visible,
+.workstation .ws-exit:focus-visible {
+  outline: 2px solid #6ee7b7;
+  outline-offset: 3px;
+}
+
+.workstation .ws-hint:active,
+.workstation .ws-exit:active {
+  transform: translateY(0);
+}
+
+/* -------------------------
+   Screen-reader-only content
+   ------------------------- */
+
+.workstation .sr-only {
+  position: absolute !important;
+
+  width: 1px !important;
+  height: 1px !important;
+
+  padding: 0 !important;
+  margin: -1px !important;
+
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* =========================================================
+   LIGHTING CONTROL
+   ========================================================= */
+
+.ws-light-toggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-height: 42px;
+  max-width: calc(100% - 36px);
+  padding: 11px 15px;
+
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+
+  background: rgba(8, 11, 18, 0.9);
+  color: #e5e7eb;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+
+  cursor: pointer;
+  user-select: none;
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.ws-light-toggle:hover {
+  background: rgba(31, 41, 55, 0.96);
+  border-color: rgba(16, 185, 129, 0.65);
+  transform: translateY(-1px);
+}
+
+.ws-light-toggle:active {
+  transform: translateY(0);
+}
+
+.ws-light-toggle:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 3px;
+}
+
+.ws-light-toggle span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #10b981;
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* Optional explicit lighting states.
+   Apply these classes only if the React component uses them. */
+
+.ws-light-toggle.is-on {
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #d1fae5;
+}
+
+.ws-light-toggle.is-off {
+  border-color: rgba(148, 163, 184, 0.24);
+  color: #e5e7eb;
+}
+
+/* =========================================================
+   SADAAT UPGRADE — WALL BRAND SIGN
+   ========================================================= */
+
+.ws-wall-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+
+  width: 330px;
+  height: 84px;
+  max-width: 100%;
+  min-width: 0;
+
+  color: #ecfff7;
+
+  font-family: "Manrope", sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  text-align: center;
+  white-space: nowrap;
+
+  text-shadow:
+    0 0 18px rgba(16, 185, 129, 0.4);
+}
+
+.ws-wall-brand img {
+  display: block;
+  flex: 0 0 auto;
+
+  width: 55px;
+  height: 55px;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(
+      0 0 9px rgba(16, 185, 129, 0.45)
+    );
+}
+
+/* =========================================================
+   INTERACTIVE WALL-MOUNTED LIGHT SWITCH
+   ========================================================= */
+
+.ws-wall-switch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+
+  width: 94px;
+  height: 136px;
+  padding: 9px 7px;
+
+  border: 1px solid rgba(180, 200, 220, 0.28);
+  border-radius: 8px;
+
+  color: #edf5fc;
+
+  background:
+    linear-gradient(
+      145deg,
+      #202c38,
+      #101720
+    );
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.35),
+    inset 0 1px rgba(255, 255, 255, 0.08);
+
+  font-family: "Manrope", sans-serif;
+
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.ws-wall-switch:hover {
+  border-color: rgba(110, 231, 183, 0.5);
+}
+
+.ws-wall-switch:active {
+  transform: scale(0.98);
+}
+
+.ws-wall-switch:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 4px;
+}
+
+.ws-wall-switch-label {
+  display: block;
+  width: 100%;
+
+  overflow: hidden;
+
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  opacity: 0.8;
+}
+
+.ws-wall-switch-control {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+
+  width: 44px;
+  height: 52px;
+
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 7px;
+
+  color: #fff;
+  background: #303e4d;
+
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.35);
+
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.ws-wall-switch.is-on {
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.ws-wall-switch.is-on .ws-wall-switch-control {
+  background: #087c59;
+
+  box-shadow:
+    0 0 18px rgba(16, 185, 129, 0.3),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.ws-wall-switch.is-off .ws-wall-switch-control {
+  background: #26313e;
+}
+
+.ws-wall-switch-state {
+  display: block;
+  max-width: 100%;
+
+  overflow: hidden;
+
+  color: #a7b7c8;
+
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-wall-switch.is-on .ws-wall-switch-state {
+  color: #7cf5c2;
+}
+
+.ws-wall-switch:hover .ws-wall-switch-control {
+  transform: translateY(-1px);
+}
+
+/* =========================================================
+   RESPONSIVE — TABLETS
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .workstation .ws-stage {
+    height: clamp(440px, 78vw, 680px);
+    border-radius: 20px;
+  }
+
+  .ws-wall-brand {
+    gap: 10px;
+    font-size: 18px;
+    letter-spacing: 1.5px;
+  }
+
+  .ws-wall-brand img {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .workstation .ws-heading {
+    margin-bottom: 1.25rem;
+  }
+
+  .workstation .ws-intro {
+    margin-top: 0.75rem;
+    padding-inline: 0.5rem;
+    line-height: 1.7;
+  }
+
+  .workstation .ws-stage {
+    width: 100%;
+    height: min(125vw, 590px);
+    min-height: 390px;
+
+    border-radius: 16px;
+  }
+
+  .workstation .ws-hint,
+  .workstation .ws-exit {
+    min-height: 38px;
+    padding: 0.65rem 0.9rem;
+
+    font-size: 0.78rem;
+  }
+
+  .workstation .ws-hint {
+    right: 0.65rem;
+    bottom: 0.65rem;
+  }
+
+  .workstation .ws-exit {
+    top: 0.65rem;
+    right: 0.65rem;
+  }
+
+  .ws-light-toggle {
+    top: 10px;
+    right: 10px;
+
+    min-height: 38px;
+    padding: 9px 12px;
+
+    font-size: 12px;
+  }
+
+  .ws-wall-brand {
+    gap: 8px;
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+
+  .ws-wall-brand img {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+  .workstation .ws-stage {
+    height: 430px;
+    min-height: 390px;
+    border-radius: 14px;
+  }
+
+  .workstation .ws-startoverlay {
+    padding: 5%;
+    gap: 3.5%;
+  }
+
+  .workstation .ws-startoverlay-logo {
+    min-width: 48px;
+  }
+
+  .workstation .ws-startoverlay-title {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+
+  .workstation .ws-startoverlay-sub {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .workstation .ws-startoverlay-btn {
+    padding: 0.7rem 1rem;
+    font-size: 13px;
+  }
+
+  .workstation .ws-hint,
+  .workstation .ws-exit {
+    gap: 0.4rem;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.72rem;
+  }
+
+  .ws-light-toggle {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .ws-wall-brand {
+    gap: 6px;
+    font-size: 12px;
+    letter-spacing: 0.6px;
+  }
+
+  .ws-wall-brand img {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY — REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .workstation .ws-startoverlay,
+  .workstation .ws-startoverlay-btn,
+  .workstation .ws-hint,
+  .workstation .ws-exit,
+  .ws-light-toggle,
+  .ws-wall-switch,
+  .ws-wall-switch-control {
+    scroll-behavior: auto;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .workstation .ws-hint:hover,
+  .workstation .ws-exit:hover,
+  .ws-light-toggle:hover,
+  .ws-wall-switch:hover,
+  .ws-wall-switch:active {
+    transform: none;
+  }
+}

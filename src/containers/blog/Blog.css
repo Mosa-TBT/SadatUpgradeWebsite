@@ -10,7 +10,6 @@
   justify-content: center;
   gap: 3.5rem;
   padding-block: 2rem;
-  counter-reset: card;
 }
 
 .blog__header {
@@ -48,21 +47,7 @@
   transform-origin: left center;
 }
 
-.blog__track {
-  display: flex;
-  gap: 2rem;
-  padding-inline: max(4rem, (100vw - 1440px) / 2);
-  width: max-content;
-  will-change: transform;
-}
-
-/* featured first card */
-.blog__track > .article:first-child {
-  width: clamp(360px, 42vw, 620px);
-}
-
-
-/* Our Projects */
+/* ---------- Our Projects ---------- */
 
 .projects__intro {
   max-width: 620px;
@@ -71,17 +56,53 @@
   opacity: 0.78;
 }
 
-.projects__track {
+/*
+  Horizontal scroller that works at every viewport.
+  Native overflow-x handles touch, trackpad, shift+wheel and the scrollbar;
+  a small JS layer adds plain-mouse wheel mapping and click-safe drag.
+*/
+.blog__track.projects__track {
   display: flex;
   align-items: stretch;
   gap: 24px;
-  width: max-content;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 24px 5vw 36px;
-  will-change: transform;
+  cursor: grab;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.55) transparent;
+}
+
+.blog__track.projects__track.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+}
+
+.blog__track.projects__track:focus-visible {
+  outline: 2px solid rgba(178, 107, 255, 0.6);
+  outline-offset: 4px;
+}
+
+.blog__track.projects__track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.blog__track.projects__track::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.blog__track.projects__track::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.55);
 }
 
 .projects__card {
   flex: 0 0 min(430px, 82vw);
+  scroll-snap-align: start;
   overflow: hidden;
   border: 1px solid rgba(128, 128, 128, 0.2);
   border-radius: 22px;
@@ -156,37 +177,6 @@
   line-height: 1.2;
 }
 
-@media (max-width: 899px) {
-  .projects__track {
-    width: 100%;
-    overflow-x: auto;
-    padding: 20px 5vw 32px;
-    scroll-snap-type: x mandatory;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .projects__card {
-    scroll-snap-align: start;
-  }
-
-  .projects__track::-webkit-scrollbar {
-    height: 5px;
-  }
-
-  .projects__track::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: rgba(16, 185, 129, 0.55);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .projects__image img,
-  .projects__card {
-    transition: none;
-  }
-}
-
 @media screen and (max-width: 900px) {
   .blog__pin {
     min-height: 0;
@@ -201,16 +191,11 @@
   .blog__progress {
     display: none;
   }
+}
 
-  .blog__track {
-    flex-direction: column;
-    width: min(100% - 3rem, 1440px);
-    padding-inline: 0;
-    margin-inline: auto;
-  }
-
-  .blog__track > .article,
-  .blog__track > .article:first-child {
-    width: 100%;
+@media (prefers-reduced-motion: reduce) {
+  .projects__image img,
+  .projects__card {
+    transition: none;
   }
 }

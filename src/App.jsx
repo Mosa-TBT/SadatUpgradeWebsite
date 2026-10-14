@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Footer, Blog, Possibility, Features, Main, Info, About, Services, Team, ContactUs } from "./containers";
+import { Footer, Blog, Possibility, Features, Main, Info, About, Services, Workstation, Team, ContactUs } from "./containers";
 // import { Brand } from "./components"; // Brand section commented out
 import { Cta, Navbar, Preloader } from "./components";
 import "./App.css";
@@ -13,6 +13,7 @@ const App = () => {
       <div className="app__grain" aria-hidden="true" />
       <Navbar />
       <Main booted={booted} />
+      <Workstation />
       {/* <Brand /> */}
       <Info />
       <Services />
