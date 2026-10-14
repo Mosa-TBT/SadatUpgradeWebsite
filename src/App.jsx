@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Footer, Blog, Possibility, Features, Main, Info, About, Services, Team, ContactUs } from "./containers";
-import { Cta, Brand, Navbar, Preloader } from "./components";
+// import { Brand } from "./components"; // Brand section commented out
+import { Cta, Navbar, Preloader } from "./components";
 import "./App.css";
 
 const App = () => {
