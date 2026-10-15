@@ -66,7 +66,7 @@ const Preloader = ({ onReveal }) => {
       <div className="preloader__panel preloader__panel--back" />
       <div className="preloader__panel preloader__panel--front" />
       <div className="preloader__center">
-        <p className="preloader__label">Initializing GPT-Bot</p>
+        <p className="preloader__label">Initializing Website</p>
         <p className="preloader__count">000</p>
         <div className="preloader__bar">
           <div className="preloader__bar-fill" />

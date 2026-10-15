@@ -631,7 +631,7 @@ function Room({ roomLightOn }) {
         <Box
           size={[0.45, 0.035, 0.02]}
           color={C.blue}
-          position={[0.12, 0.18, 0.075}
+          position={[0.12, 0.18, 0.075]}
         />
       </group>
 
@@ -774,11 +774,11 @@ function CeilingLamp({ roomLightOn }) {
         </group>
       </group>
 
-      <InteractionHint
+      {/* <InteractionHint
         visible={hovered}
         label="Ceiling lamp · Right-click to rotate"
         position={[0, -1.7, 0]}
-      />
+      /> */}
     </group>
   );
 }
@@ -951,11 +951,11 @@ function InteractiveObject({
     >
       {children}
 
-      <InteractionHint
+      {/* <InteractionHint
         visible={hovered && !dragging}
         label={`${name} · Drag to move · Right-click to rotate`}
         position={[0, 0.7, 0]}
-      />
+      /> */}
 
       {dragging && (
         <Html
@@ -1543,215 +1543,6 @@ function WirelessCharger() {
 }
 
 /* ======================================================
-   IPHONE
-====================================================== */
-
-function IPhone({ selected, onSelect, onClose }) {
-  const [showFront, setShowFront] = useState(false);
-  const [rotationY, setRotationY] = useState(0);
-  const [hovered, setHovered] = useState(false);
-
-  const toggleSide = useCallback((event) => {
-    event.stopPropagation();
-    setShowFront((current) => !current);
-    setRotationY((current) => current + Math.PI);
-  }, []);
-
-  return (
-    <group
-      position={selected ? [0, 2.5, 2.0] : [0.9, 1.73, 1.1]}
-      rotation={[0.04, rotationY, 0]}
-      scale={selected ? 2.2 : 1}
-      onPointerOver={(event) => {
-        event.stopPropagation();
-        setHovered(true);
-      }}
-      onPointerOut={() => setHovered(false)}
-      onClick={(event) => {
-        event.stopPropagation();
-
-        if (!selected) onSelect();
-      }}
-      onContextMenu={(event) => {
-        event.stopPropagation();
-        setRotationY((current) => current + Math.PI / 4);
-      }}
-    >
-      <Box
-        size={[0.43, 0.88, 0.055]}
-        color="#8d98a5"
-        roughness={0.25}
-        metalness={0.85}
-      />
-
-      <Box
-        size={[0.405, 0.855, 0.018]}
-        color="#151d27"
-        position={[0, 0, -0.036]}
-        roughness={0.3}
-      />
-
-      <mesh position={[0, 0.015, -0.047]}>
-        <circleGeometry args={[0.055, 32]} />
-        <meshStandardMaterial
-          color="#aab7c5"
-          metalness={0.7}
-          roughness={0.25}
-        />
-      </mesh>
-
-      <Box
-        size={[0.19, 0.23, 0.026]}
-        color="#303b49"
-        position={[-0.09, 0.29, -0.052]}
-        roughness={0.25}
-        metalness={0.5}
-      />
-
-      {[
-        [-0.135, 0.355],
-        [-0.055, 0.355],
-        [-0.135, 0.265],
-      ].map(([x, y], i) => (
-        <group key={i} position={[x, y, -0.071]}>
-          <mesh>
-            <circleGeometry args={[0.032, 24]} />
-
-            <meshStandardMaterial
-              color="#080b10"
-              metalness={0.8}
-              roughness={0.15}
-            />
-          </mesh>
-
-          <mesh position={[0, 0, 0.002]}>
-            <circleGeometry args={[0.019, 24]} />
-            <meshBasicMaterial color="#243b55" />
-          </mesh>
-        </group>
-      ))}
-
-      <mesh position={[-0.045, 0.265, -0.073]}>
-        <circleGeometry args={[0.012, 20]} />
-        <meshBasicMaterial color="#fff1cf" />
-      </mesh>
-
-      <Box
-        size={[0.395, 0.845, 0.008]}
-        color="#05080d"
-        position={[0, 0, 0.032]}
-        roughness={0.1}
-      />
-
-      <mesh
-        position={[0, 0, 0.038]}
-        onClick={(event) => {
-          event.stopPropagation();
-
-          if (selected) {
-            toggleSide(event);
-          } else {
-            onSelect();
-          }
-        }}
-      >
-        <planeGeometry args={[0.365, 0.805]} />
-        <meshBasicMaterial color={showFront ? "#111a28" : "#080c12"} />
-      </mesh>
-
-      <mesh position={[0, 0.35, 0.044]}>
-        <capsuleGeometry args={[0.025, 0.075, 4, 12]} />
-        <meshBasicMaterial color="#020407" />
-      </mesh>
-
-      <Box
-        size={[0.018, 0.085, 0.018]}
-        color="#c2cbd4"
-        position={[-0.222, 0.23, 0]}
-      />
-
-      <Box
-        size={[0.018, 0.085, 0.018]}
-        color="#c2cbd4"
-        position={[-0.222, 0.12, 0]}
-      />
-
-      <Box
-        size={[0.018, 0.11, 0.018]}
-        color="#c2cbd4"
-        position={[0.222, 0.17, 0]}
-      />
-
-      {selected && (
-        <Html
-          transform
-          position={[0, 0, 0.05]}
-          distanceFactor={1.1}
-          style={{ width: "140px", pointerEvents: "auto" }}
-        >
-          <div className="ws-phone-ui">
-            <div className="ws-phone-status">9:41</div>
-
-            <div className="ws-phone-content">
-              {showFront ? (
-                <>
-                  <strong>iPhone</strong>
-                  <span>Welcome</span>
-
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setShowFront(false);
-                      setRotationY((current) => current + Math.PI);
-                    }}
-                  >
-                    View back
-                  </button>
-                </>
-              ) : (
-                <>
-                  <strong>iPhone 18</strong>
-                  <span>Interactive device</span>
-
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setShowFront(true);
-                      setRotationY((current) => current + Math.PI);
-                    }}
-                  >
-                    Turn to screen
-                  </button>
-                </>
-              )}
-            </div>
-
-            <button
-              type="button"
-              className="ws-phone-close"
-              onClick={(event) => {
-                event.stopPropagation();
-                onClose();
-              }}
-            >
-              Close phone
-            </button>
-          </div>
-        </Html>
-      )}
-
-      <InteractionHint
-        visible={hovered && !selected}
-        label="iPhone 18 · Click to inspect"
-        position={[0, 0.62, 0]}
-      />
-    </group>
-  );
-}
-
-/* ======================================================
    CHAIR
 ====================================================== */
 
@@ -1963,11 +1754,11 @@ function Chair() {
         </group>
       ))}
 
-      <InteractionHint
+      {/* <InteractionHint
         visible={dragging}
         label="Moving chair…"
         position={[0, 2.6, 0]}
-      />
+      /> */}
     </group>
   );
 }
@@ -2237,12 +2028,6 @@ function Scene({
       <CoffeeMug />
       <WirelessCharger />
 
-      <IPhone
-        selected={phoneSelected}
-        onSelect={onPhoneOpen}
-        onClose={onPhoneClose}
-      />
-
       <Chair />
       <Slippers />
       <WasteBin />
@@ -2308,7 +2093,7 @@ export default function Workstation() {
         </h2>
 
         <p className="ws-intro" data-reveal>
-          Explore the room, move the desk accessories, inspect the iPhone,
+          Explore the room, move the desk accessories,
           switch the lights and open the virtual desktop.
         </p>
       </div>
@@ -2400,7 +2185,7 @@ export default function Workstation() {
       <p className="sr-only">
         An interactive three-dimensional Sadaat Upgrade workstation.
         The scene includes a virtual desktop, movable accessories,
-        a hanging lamp, a desk lamp, a movable chair and an iPhone model.
+        a hanging lamp, a desk lamp, a movable chair.
       </p>
     </section>
   );
