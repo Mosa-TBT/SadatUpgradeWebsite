@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Footer, Blog, Possibility, Features, Main, Info, About, Services, Workstation, Team, ContactUs } from "./containers";
+import { Footer, Blog, Possibility, Features, Main, Info, About, Services, Team, ContactUs } from "./containers";
+// Workstation section disabled for now. To re-enable: add `Workstation` to the
+// import above and render `<Workstation />` right after `<Main />` below.
 // import { Brand } from "./components"; // Brand section commented out
 import { Cta, Navbar, Preloader } from "./components";
 import "./App.css";
@@ -13,7 +15,7 @@ const App = () => {
       <div className="app__grain" aria-hidden="true" />
       <Navbar />
       <Main booted={booted} />
-      <Workstation />
+      {/* <Workstation /> */}
       {/* <Brand /> */}
       <Info />
       <Services />
