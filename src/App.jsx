@@ -13,7 +13,7 @@ const App = () => {
       <div className="app__grain" aria-hidden="true" />
       <Navbar />
       <Main booted={booted} />
-      {/* <Workstation /> */}
+      <Workstation />
       {/* <Brand /> */}
       <Info />
       <Services />

@@ -28,4 +28,17 @@ export default [
       ],
     },
   },
+  {
+    // React Three Fiber scenes use custom JSX props (position, args, intensity,
+    // castShadow, ...) and mutate three.js objects imperatively; the core React
+    // lint rules below do not apply to them.
+    files: ["src/containers/workstation/**/*.{js,jsx}"],
+    rules: {
+      "react/no-unknown-property": "off",
+      "react/prop-types": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/refs": "off",
+      "no-unused-vars": "off",
+    },
+  },
 ];
